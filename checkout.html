@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thread & Co. | Checkout</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="assets/images/p009.png" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="index.html">Thread & Co.</a>
+    <nav class="nav">
+      <a href="catalog.html">Catalog</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a class="cart-link" href="cart.html">🛒 <span id="cart-count">0</span></a>
+    </nav>
+  </header>
+  <main class="content">
+
+<section>
+  <h1>Checkout</h1>
+  <form id="checkout-form" class="checkout-form">
+    <fieldset>
+      <legend>Contact</legend>
+      <label>Email <input type="email" name="email" required /></label>
+      <label>Phone <input type="tel" name="phone" /></label>
+    </fieldset>
+    <fieldset>
+      <legend>Shipping Address</legend>
+      <label>Full Name <input type="text" name="fullName" required /></label>
+      <label>Address <input type="text" name="address" required /></label>
+      <label>City <input type="text" name="city" required /></label>
+      <label>State/Region <input type="text" name="state" required /></label>
+      <label>Postal Code <input type="text" name="zip" required /></label>
+      <label>Country <input type="text" name="country" required /></label>
+    </fieldset>
+    <fieldset>
+      <legend>Payment</legend>
+      <p><em>Demo only:</em> No real payment is processed. On submit, a mock order file will be downloaded.</p>
+      <label>Name on Card <input type="text" name="cardName" required /></label>
+      <label>Card Number <input type="text" name="cardNumber" required /></label>
+      <label>Expiry <input type="text" name="expiry" placeholder="MM/YY" required /></label>
+      <label>CVV <input type="text" name="cvv" required /></label>
+    </fieldset>
+    <button class="btn primary" type="submit">Place Order</button>
+  </form>
+</section>
+  </main>
+  <footer class="site-footer">
+    <div>© 2025 Thread & Co. · All rights reserved.</div>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+    </div>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
