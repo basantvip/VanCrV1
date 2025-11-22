@@ -18,12 +18,12 @@ a:hover { text-decoration: underline; }
 .header-logo { height: 40px; width: auto; display: block; }
 
 /* Single logo page layout */
-.single-logo-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #cfcfcf; }
-.logo-wrap { text-align: center; padding: 24px; }
+.single-logo-page { min-height: 100vh; background: #cfcfcf; }
+.logo-wrap { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; padding: 24px; }
 .logo-wrap .hero-logo { max-width: 640px; width: 70vw; height: auto; box-shadow: 0 0 0 4px rgba(0,0,0,0.06); background: #f6f2f0; display: inline-block; }
 
-/* Hide site chrome when using single-logo-page class on body (keeps file minimal) */
-header.site-header, .site-footer, .content { display: none; }
+/* Hide site chrome when using single-logo-page class on body (keep visible only the logo) */
+header.site-header, .site-footer, .content { display: none !important; visibility: hidden !important; }
 
 .hero-title { margin: 28px 0 8px 0; font-size: 48px; letter-spacing: 4px; font-weight: 800; color: #333; }
 .contact-line { margin: 0; color: #222222; opacity: 0.98; font-size: 24px; font-weight: 800; }
