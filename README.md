@@ -1,5 +1,5 @@
 
-# Thread & Co. - Starter Clothing Storefront (Static)
+# Vanshika Creations - VanCr - Starter Clothing Storefront (Static)
 
 This is a fully client-side demo storefront you can open locally or host on any static web host.
 
