@@ -60,6 +60,11 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
 .filters { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
 .filters input, .filters select { padding: 8px; border: 1px solid var(--border); border-radius: 8px; }
 
+/* Shop subcategories */
+.subcategories { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 20px 0; }
+.subcategories .subcat { display: inline-block; padding: 6px 10px; background: #fbfbfb; border: 1px solid var(--border); border-radius: 8px; color: var(--text); text-decoration: none; font-size: 14px; }
+.subcategories .subcat:hover { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+
 /* Product detail */
 .product-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .product-detail img { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 12px; }
