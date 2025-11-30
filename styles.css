@@ -49,6 +49,21 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
 
 /* ensure header logo doesn't overlap main content */
 .home-header { min-height: 64px; }
+
+/* Top rolling banner */
+.top-banner { overflow: hidden; background: linear-gradient(90deg, #ffcf33 0%, #ff8a80 100%); color: #0b0b0b; }
+.top-banner .banner-inner { display: inline-block; white-space: nowrap; padding: 10px 0; font-weight: 700; font-size: 18px; animation: marquee 18s linear infinite; }
+.top-banner .banner-inner span { padding-left: 100%; display: inline-block; }
+.top-banner .banner-inner:hover { animation-play-state: paused; }
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+
+@media (max-width: 720px) {
+  .top-banner .banner-inner { font-size: 15px; animation-duration: 20s; }
+}
 .home-main { padding: 48px 20px; text-align: center; }
 .home-title { font-size: 48px; margin: 12px 0; font-weight: 900; letter-spacing: 1px; }
 .home-sub { color: var(--muted); margin: 4px 0 24px 0; }
