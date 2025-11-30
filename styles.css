@@ -64,7 +64,7 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
 .top-banner .banner-inner,
 .top-banner .banner-inner span,
 .top-banner .banner-inner > * {
-  background: linear-gradient(90deg, #ff004c, #ff8a00, #ffef00, #34d058, #1e90ff, #7b2cbf);
+  background: linear-gradient(90deg, #800000, #1e90ff, #28a745);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
