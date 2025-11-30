@@ -35,8 +35,8 @@
   </div>
   
   <h2>Or send us a message</h2>
-  <!-- Form will open the user's mail client via mailto: (no server required) -->
-  <form id="contact-form" action="mailto:support@vancr.in" method="get" enctype="text/plain">
+  <!-- Form will POST to server endpoint to save into contact.xlsx -->
+  <form id="contact-form" method="post">
     <div>
       <label>Subject<br><input type="text" id="c-subject" name="subject" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"/></label>
     </div>
@@ -64,33 +64,35 @@
     </div>
   </footer>
   <script>
-  // contact form handler - builds a mailto: link
+  // contact form handler - POSTs submission JSON to server endpoint /save-contact
   (function(){
-    const recipient = 'support@vancr.in';
     const form = document.getElementById('contact-form');
     if (!form) return;
-    form.addEventListener('submit', function(e){
+    form.addEventListener('submit', async function(e){
       e.preventDefault();
-      const subject = document.getElementById('c-subject').value || '';
       const phone = document.getElementById('c-phone').value || '';
       const email = document.getElementById('c-email').value || '';
       const message = document.getElementById('c-message').value || '';
 
-      const bodyLines = [];
-      bodyLines.push(message);
-      bodyLines.push('');
-      bodyLines.push('Contact number: ' + phone);
-      bodyLines.push('Reply email: ' + email);
+      const payload = { phone, email, message };
 
-      const mailto = 'mailto:support@vancr.in'
-        + '?subject=' + encodeURIComponent(subject)
-        + '&body=' + encodeURIComponent(bodyLines.join('\n'));
-
-      // Open the user's default mail client with the composed message
       try {
-        window.location.href = mailto;
+        const endpoint = window.EMAIL_ENDPOINT || 'http://localhost:3000/save-contact';
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          form.innerHTML = '<div class="success">Thank you — your message has been saved.</div>';
+        } else {
+          console.error('Save failed', data);
+          alert('Could not save message. Please try again later.');
+        }
       } catch (err) {
-        window.open(mailto, '_blank');
+        console.error('Network error', err);
+        alert('Could not reach server. Make sure the backend is running.');
       }
     });
   })();
