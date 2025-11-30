@@ -77,7 +77,7 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
 /* Contact link inside banner (right) */
 .top-banner .banner-contact {
   position: absolute;
-  right: calc(12px + 0.5in); /* shifted 0.5in left */
+  right: calc(12px + 0.25in); /* shifted 0.25in right (reduced offset) */
   bottom: 10px; /* place below the logo */
   z-index: 80;
   background: transparent;
@@ -91,11 +91,11 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
 .top-banner .banner-contact:hover { text-decoration: underline; }
 
 @media (max-width: 720px) {
-  .top-banner .banner-contact { right: calc(10px + 0.5in); bottom: 8px; padding: 4px 6px; font-size: 14px; }
+  .top-banner .banner-contact { right: calc(10px + 0.25in); bottom: 8px; padding: 4px 6px; font-size: 14px; }
 }
 
 @media (max-width: 520px) {
-  .top-banner .banner-contact { right: calc(8px + 0.5in); bottom: 6px; padding: 3px 6px; font-size: 13px; }
+  .top-banner .banner-contact { right: calc(8px + 0.25in); bottom: 6px; padding: 3px 6px; font-size: 13px; }
 }
 
 @keyframes marquee {
