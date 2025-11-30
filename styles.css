@@ -33,6 +33,21 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
   .logo-wrap .hero-logo { width: 85vw; }
   .contact-line { font-size: 20px; }
 }
+.home-header { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 12px 20px; position: sticky; top: 0; background: var(--bg); z-index: 20; border-bottom: 1px solid var(--border); }
+.home-logo-link { position: absolute; left: 16px; top: 12px; }
+.home-logo { height: 44px; width: auto; display: block; }
+.top-categories { display: flex; gap: 12px; align-items: center; }
+.top-categories .cat { padding: 6px 10px; border-radius: 8px; background: transparent; color: var(--text); border: 1px solid transparent; }
+.top-categories .cat:hover { background: #f8fafc; border-color: var(--border); }
+.home-main { padding: 48px 20px; text-align: center; }
+.home-title { font-size: 48px; margin: 12px 0; font-weight: 900; letter-spacing: 1px; }
+.home-sub { color: var(--muted); margin: 4px 0 24px 0; }
+
+@media (max-width: 720px) {
+  .home-title { font-size: 32px; }
+  .home-logo { height: 36px; }
+  .top-categories { gap: 8px; font-size: 14px; }
+}
 .site-footer { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-top: 1px solid var(--border); }
 .footer-links a { margin-left: 12px; color: var(--muted); }
 
