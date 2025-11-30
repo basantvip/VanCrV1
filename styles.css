@@ -60,6 +60,17 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
 .top-banner .banner-inner span { padding-left: 0; padding-right: 240px; display: inline-block; }
 .top-banner .banner-inner:hover { animation-play-state: paused; }
 
+/* Rainbow gradient text for banner */
+.top-banner .banner-inner,
+.top-banner .banner-inner span,
+.top-banner .banner-inner > * {
+  background: linear-gradient(90deg, #ff004c, #ff8a00, #ffef00, #34d058, #1e90ff, #7b2cbf);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
 @keyframes marquee {
   0% { transform: translateX(0%); }
   100% { transform: translateX(-50%); }
