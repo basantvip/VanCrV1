@@ -34,7 +34,8 @@
   </div>
 
   <h2>Send us a message</h2>
-  <form id="contact-form">
+  <!-- Form will open the user's mail client via mailto: (no server required) -->
+  <form id="contact-form" action="mailto:basant.vip@gmail.com" method="get" enctype="text/plain">
     <div>
       <label>Subject<br><input type="text" id="c-subject" name="subject" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"/></label>
     </div>
@@ -64,6 +65,7 @@
   <script>
   // contact form handler - builds a mailto: link to basant.vip@gmail.com
   (function(){
+    const recipient = 'basant.vip@gmail.com';
     const form = document.getElementById('contact-form');
     if (!form) return;
     form.addEventListener('submit', function(e){
@@ -83,8 +85,12 @@
         + '?subject=' + encodeURIComponent(subject)
         + '&body=' + encodeURIComponent(bodyLines.join('\n'));
 
-      // open mail client
-      window.location.href = mailto;
+      // Open the user's default mail client with the composed message
+      try {
+        window.location.href = mailto;
+      } catch (err) {
+        window.open(mailto, '_blank');
+      }
     });
   })();
   </script>
