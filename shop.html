@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shop - Kids Clothing</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <a href="index.html">Home</a> › <span id="current-category">All</span>
+  </header>
+
+  <main class="shop-page">
+    <aside class="filters">
+      <h3>Filters</h3>
+      <div>
+        <strong>Age Group</strong>
+        <ul>
+          <li><label><input type="checkbox" class="filter-age" value="Infant"> Infant (0–12m)</label></li>
+          <li><label><input type="checkbox" class="filter-age" value="Toddler"> Toddler (1–4y)</label></li>
+          <li><label><input type="checkbox" class="filter-age" value="Kids"> Kids (4–12y)</label></li>
+        </ul>
+      </div>
+      <div>
+        <strong>Season</strong>
+        <ul>
+          <li><label><input type="checkbox" class="filter-season" value="Summer"> Summer</label></li>
+          <li><label><input type="checkbox" class="filter-season" value="Winter"> Winter</label></li>
+          <li><label><input type="checkbox" class="filter-season" value="Rainwear"> Rainwear</label></li>
+        </ul>
+      </div>
+      <div>
+        <strong>Occasion</strong>
+        <ul>
+          <li><label><input type="checkbox" class="filter-occasion" value="Casual"> Casual</label></li>
+          <li><label><input type="checkbox" class="filter-occasion" value="Party"> Party</label></li>
+          <li><label><input type="checkbox" class="filter-occasion" value="Formal"> Formal</label></li>
+        </ul>
+      </div>
+    </aside>
+
+    <section class="catalog">
+      <h2 id="catalog-title">Categories</h2>
+      <div id="subcategories" class="subcategories"></div>
+
+      <h3>Products</h3>
+      <div id="products" class="product-grid">Loading products…</div>
+    </section>
+  </main>
+
+  <script src="shop.js"></script>
+</body>
+</html>
