@@ -43,9 +43,12 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
 
 /* Centered larger category bar on home page */
 .center-cats { justify-content: center; margin-top: 18px; flex-wrap: wrap; gap: 20px; }
-.center-cats .cat { display: inline-flex; flex-direction: column; align-items: center; padding: 22px 22px; font-size: 24px; border-radius: 14px; background: #fff; border: 1px solid var(--border); box-shadow: 0 10px 28px rgba(0,0,0,0.10); min-width: 240px; text-align: center; }
+.center-cats .cat { display: inline-flex; flex-direction: column; align-items: center; padding: 28px; font-size: 24px; border-radius: 16px; background: linear-gradient(135deg, #fff7f6 0%, #f6fbff 100%); border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 12px 30px rgba(13, 17, 23, 0.06); min-width: 240px; text-align: center; transition: transform 180ms ease, box-shadow 180ms ease; }
 .center-cats .cat > span { margin-top: 12px; display: block; }
-.center-cats .cat-thumb { width: 260px; height: 260px; border-radius: 12px; object-fit: cover; object-position: center center; }
+.center-cats .cat-thumb { width: 240px; height: 240px; border-radius: 14px; object-fit: cover; object-position: center center; background: #fff; box-shadow: 0 8px 20px rgba(13,17,23,0.06); border: 1px solid rgba(0,0,0,0.03); transition: transform 200ms ease, box-shadow 200ms ease; }
+
+.center-cats .cat:hover { transform: translateY(-6px); box-shadow: 0 18px 38px rgba(13,17,23,0.10); }
+.center-cats .cat:hover .cat-thumb { transform: translateY(-4px); box-shadow: 0 18px 38px rgba(13,17,23,0.10); }
 
 /* ensure header logo doesn't overlap main content */
 .home-header { min-height: 64px; }
@@ -69,6 +72,31 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+}
+
+/* Contact link inside banner (right) */
+.top-banner .banner-contact {
+  position: absolute;
+  right: 110px; /* leave space for logo */
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 80;
+  background: rgba(255,255,255,0.12);
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.top-banner .banner-contact:hover { background: rgba(255,255,255,0.18); }
+
+@media (max-width: 720px) {
+  .top-banner .banner-contact { right: 92px; padding: 6px 10px; font-size: 14px; }
+}
+
+@media (max-width: 520px) {
+  .top-banner .banner-contact { right: 84px; padding: 6px 8px; font-size: 13px; }
 }
 
 @keyframes marquee {

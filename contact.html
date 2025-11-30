@@ -27,7 +27,31 @@
 
 <section>
   <h1>Contact</h1>
-  <p>Questions? Reach us at <a href="mailto:support@threadandco.example">support@threadandco.example</a>.</p>
+  <div class="contact-info">
+    <p><strong>Contact Person:</strong> Pankaj</p>
+    <p><strong>Phone:</strong> <a href="tel:+917044454440">+91-70444 54440</a></p>
+    <p><strong>Email:</strong> <a href="mailto:basant.vip@gmail.com">basant.vip@gmail.com</a></p>
+  </div>
+
+  <h2>Send us a message</h2>
+  <form id="contact-form">
+    <div>
+      <label>Subject<br><input type="text" id="c-subject" name="subject" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"/></label>
+    </div>
+    <div style="margin-top:8px;">
+      <label>Contact Number<br><input type="tel" id="c-phone" name="phone" placeholder="+91-..." style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"/></label>
+    </div>
+    <div style="margin-top:8px;">
+      <label>Email Address<br><input type="email" id="c-email" name="email" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"/></label>
+    </div>
+    <div style="margin-top:8px;">
+      <label>Message<br><textarea id="c-message" name="message" rows="6" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"></textarea></label>
+    </div>
+    <div style="margin-top:12px;">
+      <button type="submit" class="btn primary">Submit</button>
+    </div>
+  </form>
+
 </section>
   </main>
   <footer class="site-footer">
@@ -37,6 +61,32 @@
       <a href="terms.html">Terms</a>
     </div>
   </footer>
-  <script src="app.js"></script>
+  <script>
+  // contact form handler - builds a mailto: link to basant.vip@gmail.com
+  (function(){
+    const form = document.getElementById('contact-form');
+    if (!form) return;
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      const subject = document.getElementById('c-subject').value || '';
+      const phone = document.getElementById('c-phone').value || '';
+      const email = document.getElementById('c-email').value || '';
+      const message = document.getElementById('c-message').value || '';
+
+      const bodyLines = [];
+      bodyLines.push(message);
+      bodyLines.push('');
+      bodyLines.push('Contact number: ' + phone);
+      bodyLines.push('Reply email: ' + email);
+
+      const mailto = 'mailto:basant.vip@gmail.com'
+        + '?subject=' + encodeURIComponent(subject)
+        + '&body=' + encodeURIComponent(bodyLines.join('\n'));
+
+      // open mail client
+      window.location.href = mailto;
+    });
+  })();
+  </script>
 </body>
 </html>
