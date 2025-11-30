@@ -77,26 +77,25 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
 /* Contact link inside banner (right) */
 .top-banner .banner-contact {
   position: absolute;
-  right: 110px; /* leave space for logo */
-  top: 50%;
-  transform: translateY(-50%);
+  right: 12px; /* align with logo right edge */
+  bottom: 10px; /* place below the logo */
   z-index: 80;
-  background: rgba(255,255,255,0.12);
-  padding: 8px 12px;
-  border-radius: 8px;
-  color: #fff;
+  background: transparent;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #1e90ff; /* blue */
   font-weight: 600;
   text-decoration: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: none;
 }
-.top-banner .banner-contact:hover { background: rgba(255,255,255,0.18); }
+.top-banner .banner-contact:hover { text-decoration: underline; }
 
 @media (max-width: 720px) {
-  .top-banner .banner-contact { right: 92px; padding: 6px 10px; font-size: 14px; }
+  .top-banner .banner-contact { right: 10px; bottom: 8px; padding: 4px 6px; font-size: 14px; }
 }
 
 @media (max-width: 520px) {
-  .top-banner .banner-contact { right: 84px; padding: 6px 8px; font-size: 13px; }
+  .top-banner .banner-contact { right: 8px; bottom: 6px; padding: 3px 6px; font-size: 13px; }
 }
 
 @keyframes marquee {
