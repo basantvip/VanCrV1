@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const recipient = process.env.RECIPIENT_EMAIL || 'basant.vip@gmail.com';
+const recipient = process.env.RECIPIENT_EMAIL || 'support@vancr.in';
 
 if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
   console.warn('Warning: SMTP credentials are not fully configured. Check .env.');

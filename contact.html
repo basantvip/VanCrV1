@@ -64,9 +64,9 @@
     </div>
   </footer>
   <script>
-  // contact form handler - builds a mailto: link to basant.vip@gmail.com
+  // contact form handler - builds a mailto: link
   (function(){
-    const recipient = 'basant.vip@gmail.com';
+    const recipient = 'support@vancr.in';
     const form = document.getElementById('contact-form');
     if (!form) return;
     form.addEventListener('submit', function(e){
@@ -82,7 +82,7 @@
       bodyLines.push('Contact number: ' + phone);
       bodyLines.push('Reply email: ' + email);
 
-      const mailto = 'mailto:basant.vip@gmail.com'
+      const mailto = 'mailto:support@vancr.in'
         + '?subject=' + encodeURIComponent(subject)
         + '&body=' + encodeURIComponent(bodyLines.join('\n'));
 
