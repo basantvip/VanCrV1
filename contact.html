@@ -85,7 +85,16 @@
         });
         const data = await res.json();
         if (res.ok && data.ok) {
-          form.innerHTML = '<div class="success">Thank you — your message has been saved.</div>';
+          // clear inputs and show a lightweight success message
+          form.reset();
+          let msg = document.getElementById('contact-success');
+          if (!msg) {
+            msg = document.createElement('div');
+            msg.id = 'contact-success';
+            msg.style.cssText = 'margin-top:12px; padding:10px; border-radius:8px; background:#e6ffed; color:#0a5f2b; font-weight:600;';
+            form.parentNode.insertBefore(msg, form);
+          }
+          msg.textContent = 'Thank you — your message has been saved.';
         } else {
           console.error('Save failed', data);
           alert('Could not save message. Please try again later.');
