@@ -43,9 +43,9 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
 
 /* Centered larger category bar on home page */
 .center-cats { justify-content: center; margin-top: 18px; flex-wrap: wrap; gap: 20px; }
-.center-cats .cat { display: inline-flex; flex-direction: column; align-items: center; padding: 18px 18px; font-size: 20px; border-radius: 14px; background: #fff; border: 1px solid var(--border); box-shadow: 0 6px 18px rgba(0,0,0,0.06); min-width: 140px; text-align: center; }
-.center-cats .cat > span { margin-top: 8px; display: block; }
-.center-cats .cat-thumb { width: 120px; height: 120px; border-radius: 12px; object-fit: cover; }
+.center-cats .cat { display: inline-flex; flex-direction: column; align-items: center; padding: 20px 20px; font-size: 22px; border-radius: 14px; background: #fff; border: 1px solid var(--border); box-shadow: 0 8px 22px rgba(0,0,0,0.08); min-width: 180px; text-align: center; }
+.center-cats .cat > span { margin-top: 10px; display: block; }
+.center-cats .cat-thumb { width: 180px; height: 180px; border-radius: 12px; object-fit: cover; }
 
 /* ensure header logo doesn't overlap main content */
 .home-header { min-height: 64px; }
@@ -57,6 +57,12 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
   .home-title { font-size: 32px; }
   .home-logo { height: 36px; }
   .top-categories { gap: 8px; font-size: 14px; }
+}
+
+/* Mobile adjustments for large thumbnails */
+@media (max-width: 520px) {
+  .center-cats .cat { min-width: 120px; padding: 12px; font-size: 16px; }
+  .center-cats .cat-thumb { width: 120px; height: 120px; }
 }
 .site-footer { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-top: 1px solid var(--border); }
 .footer-links a { margin-left: 12px; color: var(--muted); }
