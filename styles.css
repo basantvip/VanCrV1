@@ -53,10 +53,10 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
 /* Top rolling banner */
 .top-banner { overflow: hidden; background: linear-gradient(90deg, #ffcf33 0%, #ff8a80 100%); color: #0b0b0b; }
 .top-banner { overflow: hidden; background: linear-gradient(90deg, #ffcf33 0%, #ff8a80 100%); color: #c40000; position: relative; }
-.top-banner { overflow: hidden; background: linear-gradient(90deg, #ffcf33 0%, #ff8a80 100%); color: #c40000; position: relative; }
-.top-banner .banner-logo { position: absolute; right: 12px; left: auto; top: 50%; transform: translateY(-50%); height: calc(100% - 12px); max-height: 110px; width: auto; z-index: 60; display: block; }
-.top-banner .banner-inner { display: inline-block; white-space: nowrap; padding: 28px 0; font-weight: 700; font-size: 20px; animation: marquee 18s linear infinite; font-family: 'Playfair Display', serif; color: #c40000; }
-.top-banner .banner-inner span { padding-right: 140px; display: inline-block; }
+.top-banner { overflow: hidden; background: linear-gradient(90deg, #ffcf33 0%, #ff8a80 100%); color: #c40000; position: relative; display: flex; align-items: center; height: 114px; }
+.top-banner .banner-logo { position: absolute; right: 12px; left: auto; top: 50%; transform: translateY(-50%); height: calc(100% - 12px); max-height: 160px; width: auto; z-index: 60; display: block; }
+.top-banner .banner-inner { display: inline-block; white-space: nowrap; padding: 0; font-weight: 700; font-size: 22px; animation: marquee 18s linear infinite; font-family: 'Playfair Display', serif; color: #c40000; }
+.top-banner .banner-inner span { padding-right: 180px; display: inline-block; }
 .top-banner .banner-inner:hover { animation-play-state: paused; }
 
 @keyframes marquee {
@@ -65,13 +65,16 @@ header.site-header, .site-footer, .content { display: none !important; visibilit
 }
 
 @media (max-width: 720px) {
-  .top-banner .banner-inner { font-size: 15px; animation-duration: 20s; }
+  .top-banner { height: 96px; }
+  .top-banner .banner-inner { font-size: 16px; animation-duration: 20s; }
+  .top-banner .banner-inner span { padding-right: 120px; }
 }
 
 @media (max-width: 520px) {
+  .top-banner { height: 80px; }
   .top-banner .banner-logo { width: 72px; top: 6px; right: 8px; left: auto; }
-  .top-banner .banner-inner { padding: 18px 0; font-size: 15px; }
-  .top-banner .banner-inner span { padding-right: 110px; }
+  .top-banner .banner-inner { font-size: 14px; }
+  .top-banner .banner-inner span { padding-right: 90px; }
 }
 .home-main { padding: 48px 20px; text-align: center; }
 /* Styled home title */
