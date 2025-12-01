@@ -16,10 +16,11 @@ CORS(app)  # Enable CORS for all origins (restrict in production via CORS config
 
 # Environment variables (set in App Service Configuration)
 COSMOS_ENDPOINT = os.environ.get('COSMOS_ENDPOINT')  # e.g. https://vancr-cosmos.documents.azure.com:443/
+COSMOS_CONNECTION_STRING = os.environ.get('COSMOS_CONNECTION_STRING')  # For local testing
 DATABASE_NAME = os.environ.get('DATABASE_NAME', 'VanCrDB')
 CONTAINER_NAME = os.environ.get('CONTAINER_NAME', 'ContactSubmissions')
 
-# Initialize Cosmos client with Managed Identity
+# Initialize Cosmos client with Managed Identity or connection string
 credential = DefaultAzureCredential()
 cosmos_client = None
 database = None
@@ -28,15 +29,19 @@ container = None
 def init_cosmos():
     """Initialize Cosmos DB client, database, and container."""
     global cosmos_client, database, container
-    if not COSMOS_ENDPOINT:
-        raise ValueError("COSMOS_ENDPOINT environment variable is required")
     
-    cosmos_client = CosmosClient(COSMOS_ENDPOINT, credential=credential)
+    # Use connection string for local dev, Managed Identity for production
+    if COSMOS_CONNECTION_STRING:
+        cosmos_client = CosmosClient.from_connection_string(COSMOS_CONNECTION_STRING)
+    elif COSMOS_ENDPOINT:
+        cosmos_client = CosmosClient(COSMOS_ENDPOINT, credential=credential)
+    else:
+        raise ValueError("COSMOS_ENDPOINT or COSMOS_CONNECTION_STRING environment variable is required")
     database = cosmos_client.create_database_if_not_exists(id=DATABASE_NAME)
     container = database.create_container_if_not_exists(
         id=CONTAINER_NAME,
-        partition_key=PartitionKey(path="/id"),
-        offer_throughput=400  # Minimum for serverless or adjust as needed
+        partition_key=PartitionKey(path="/id")
+        # No offer_throughput for serverless Cosmos DB
     )
     app.logger.info(f"Cosmos initialized: {DATABASE_NAME}/{CONTAINER_NAME}")
 
@@ -108,12 +113,9 @@ def health():
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 503
 
 if __name__ == '__main__':
-    # Initialize Cosmos on startup
-    try:
-        init_cosmos()
-    except Exception as e:
-        app.logger.error(f"Cosmos init failed: {e}")
+    # Don't initialize Cosmos on startup in debug mode (causes double init)
+    # It will initialize on first request instead
     
     # Local development server
     port = int(os.environ.get('PORT', 8000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
