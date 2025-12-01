@@ -64,49 +64,77 @@
     </div>
   </footer>
   <script>
-  // Backend API endpoint - update after deployment
-  // window.EMAIL_ENDPOINT = 'https://vancr-backend.azurewebsites.net/api/save-contact';
+  // Backend API endpoint - Azure App Service
+  window.EMAIL_ENDPOINT = 'https://vancr-backend.azurewebsites.net/api/save-contact';
   </script>
   <script>
-  // contact form handler - POSTs submission JSON to server endpoint /save-contact
+  // Contact form handler - POSTs submission to Azure backend (Cosmos DB)
   (function(){
     const form = document.getElementById('contact-form');
     if (!form) return;
+    
     form.addEventListener('submit', async function(e){
       e.preventDefault();
-      const phone = document.getElementById('c-phone').value || '';
-      const email = document.getElementById('c-email').value || '';
-      const message = document.getElementById('c-message').value || '';
-      const subject = document.getElementById('c-subject').value || '';
+      
+      // Disable submit button during processing
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+      
+      // Get form values
+      const phone = document.getElementById('c-phone').value.trim();
+      const email = document.getElementById('c-email').value.trim();
+      const message = document.getElementById('c-message').value.trim();
+      const subject = document.getElementById('c-subject').value.trim();
 
       const payload = { phone, email, message, subject };
 
       try {
-        const endpoint = window.EMAIL_ENDPOINT || 'http://localhost:3000/save-contact';
+        const endpoint = window.EMAIL_ENDPOINT || 'http://localhost:8000/api/save-contact';
         const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
+        
         const data = await res.json();
+        
         if (res.ok && data.ok) {
-          // clear inputs and show a lightweight success message
+          // Clear form
           form.reset();
+          
+          // Show success message
           let msg = document.getElementById('contact-success');
           if (!msg) {
             msg = document.createElement('div');
             msg.id = 'contact-success';
-            msg.style.cssText = 'margin-top:12px; padding:10px; border-radius:8px; background:#e6ffed; color:#0a5f2b; font-weight:600;';
+            msg.style.cssText = 'margin-top:16px; padding:16px; border-radius:8px; background:#e6ffed; color:#0a5f2b; font-weight:600; text-align:center; font-size:16px;';
             form.parentNode.insertBefore(msg, form);
           }
-          msg.textContent = 'Thank you — your message has been saved.';
+          msg.textContent = 'Thank you for reaching out. We will get back to you as soon as possible.';
+          
+          // Scroll to success message
+          msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Auto-hide after 8 seconds
+          setTimeout(() => {
+            msg.style.transition = 'opacity 0.5s';
+            msg.style.opacity = '0';
+            setTimeout(() => msg.remove(), 500);
+          }, 8000);
+          
         } else {
           console.error('Save failed', data);
-          alert('Could not save message. Please try again later.');
+          alert('Could not save your message. Please try again later or contact us directly.');
         }
       } catch (err) {
         console.error('Network error', err);
-        alert('Could not reach server. Make sure the backend is running.');
+        alert('Could not reach our server. Please try again later or contact us directly at support@vancr.in');
+      } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
       }
     });
   })();
