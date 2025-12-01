@@ -64,6 +64,10 @@
     </div>
   </footer>
   <script>
+  // Backend API endpoint - update after deployment
+  // window.EMAIL_ENDPOINT = 'https://vancr-backend.azurewebsites.net/api/save-contact';
+  </script>
+  <script>
   // contact form handler - POSTs submission JSON to server endpoint /save-contact
   (function(){
     const form = document.getElementById('contact-form');
@@ -73,8 +77,9 @@
       const phone = document.getElementById('c-phone').value || '';
       const email = document.getElementById('c-email').value || '';
       const message = document.getElementById('c-message').value || '';
+      const subject = document.getElementById('c-subject').value || '';
 
-      const payload = { phone, email, message };
+      const payload = { phone, email, message, subject };
 
       try {
         const endpoint = window.EMAIL_ENDPOINT || 'http://localhost:3000/save-contact';

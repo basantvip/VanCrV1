@@ -1,0 +1,47 @@
+name: Deploy Azure Function
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'azure-functions/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        working-directory: azure-functions
+        run: npm install --production
+
+      # Publish using a Function App publish profile stored as a secret
+      - name: Deploy Function App
+        uses: Azure/functions-action@v1
+        with:
+          app-name: vancr-func
+          package: azure-functions
+          publish-profile: ${{ secrets.FUNCTIONAPP_PUBLISH_PROFILE }}
+
+      - name: Set App Settings (EXCEL_SAS_URL)
+        if: success()
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            if [ -n "${{ secrets.EXCEL_SAS_URL }}" ]; then
+              az functionapp config appsettings set \
+                --name vancr-func \
+                --resource-group rg-vancr-prod \
+                --settings EXCEL_SAS_URL='${{ secrets.EXCEL_SAS_URL }}';
+            else
+              echo 'EXCEL_SAS_URL secret not set';
+            fi
