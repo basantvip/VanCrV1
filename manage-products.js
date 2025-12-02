@@ -117,7 +117,29 @@ function openEditModal(productId) {
   productToEdit = products.find(p => p.id === productId);
   if (!productToEdit) return;
   
+  // Set price
   document.getElementById('editPrice').value = productToEdit.price;
+  
+  // Set categories
+  document.querySelectorAll('input[name="categories"]').forEach(checkbox => {
+    checkbox.checked = productToEdit.categories.includes(checkbox.value);
+  });
+  
+  // Set age groups
+  document.querySelectorAll('input[name="ageGroups"]').forEach(checkbox => {
+    checkbox.checked = productToEdit.ageGroups.includes(checkbox.value);
+  });
+  
+  // Set seasons
+  document.querySelectorAll('input[name="seasons"]').forEach(checkbox => {
+    checkbox.checked = productToEdit.seasons.includes(checkbox.value);
+  });
+  
+  // Set occasions
+  document.querySelectorAll('input[name="occasions"]').forEach(checkbox => {
+    checkbox.checked = productToEdit.occasions.includes(checkbox.value);
+  });
+  
   document.getElementById('editModal').classList.add('active');
 }
 
@@ -139,7 +161,38 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
     return;
   }
   
+  // Get form values
   const newPrice = parseFloat(document.getElementById('editPrice').value);
+  
+  const categories = Array.from(document.querySelectorAll('input[name="categories"]:checked'))
+    .map(cb => cb.value);
+  
+  const ageGroups = Array.from(document.querySelectorAll('input[name="ageGroups"]:checked'))
+    .map(cb => cb.value);
+  
+  const seasons = Array.from(document.querySelectorAll('input[name="seasons"]:checked'))
+    .map(cb => cb.value);
+  
+  const occasions = Array.from(document.querySelectorAll('input[name="occasions"]:checked'))
+    .map(cb => cb.value);
+  
+  // Validate at least one option is selected for each field
+  if (categories.length === 0) {
+    showStatus('Please select at least one category', 'error');
+    return;
+  }
+  if (ageGroups.length === 0) {
+    showStatus('Please select at least one age group', 'error');
+    return;
+  }
+  if (seasons.length === 0) {
+    showStatus('Please select at least one season', 'error');
+    return;
+  }
+  if (occasions.length === 0) {
+    showStatus('Please select at least one occasion', 'error');
+    return;
+  }
   
   try {
     const response = await fetch(`${API_BASE}/api/products/${productToEdit.id}`, {
@@ -149,7 +202,11 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
         'X-User-Id': user.userId
       },
       body: JSON.stringify({
-        price: newPrice
+        price: newPrice,
+        categories: categories,
+        ageGroups: ageGroups,
+        seasons: seasons,
+        occasions: occasions
       })
     });
     

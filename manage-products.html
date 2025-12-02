@@ -259,6 +259,51 @@
           <label for="editPrice">Price (₹) *</label>
           <input type="number" id="editPrice" required min="0" step="0.01">
         </div>
+        
+        <div class="form-group">
+          <label>Categories *</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="categories" value="Girls"> Girls</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="categories" value="Boys"> Boys</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="categories" value="Baby"> Baby</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="categories" value="Accessories"> Accessories</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="categories" value="Footwear"> Footwear</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Age Groups *</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="ageGroups" value="Newborn"> Newborn</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="ageGroups" value="Infant"> Infant</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="ageGroups" value="Toddler"> Toddler</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="ageGroups" value="Preschool"> Preschool</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="ageGroups" value="Kids"> Kids</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Seasons *</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="seasons" value="Spring"> Spring</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="seasons" value="Summer"> Summer</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="seasons" value="Fall"> Fall</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="seasons" value="Winter"> Winter</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="seasons" value="All Season"> All Season</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Occasions *</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="occasions" value="Casual"> Casual</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="occasions" value="Formal"> Formal</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="occasions" value="Party"> Party</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="occasions" value="Traditional"> Traditional</label>
+            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="occasions" value="Everyday"> Everyday</label>
+          </div>
+        </div>
+
         <div class="modal-actions">
           <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
           <button type="submit" class="btn-confirm" style="background: #3b82f6;">Save Changes</button>
