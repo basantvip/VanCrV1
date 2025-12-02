@@ -1,7 +1,9 @@
-// Use current hostname for mobile device support, fallback to localhost
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-  ? 'http://localhost:8000' 
-  : `http://${window.location.hostname}:8000`;
+// API Base URL - use production backend when on GitHub Pages, otherwise local
+const API_BASE = window.location.hostname.includes('github.io') 
+  ? 'https://vancr-backend.azurewebsites.net' 
+  : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:8000' 
+    : `http://${window.location.hostname}:8000`);
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
