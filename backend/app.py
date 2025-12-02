@@ -33,29 +33,38 @@ BLOB_CONTAINER = 'product-images'
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-# Initialize Azure credentials and Key Vault client
-credential = DefaultAzureCredential()
-secret_client = SecretClient(vault_url=KEY_VAULT_URI, credential=credential)
-
-# Retrieve secrets from Key Vault
+# Initialize Azure credentials and Key Vault client (only if not using env vars)
 def get_secret(secret_name):
-    """Retrieve secret from Azure Key Vault."""
+    """Retrieve secret from Azure Key Vault or environment variable."""
+    # First check if secret is in environment variable
+    env_secret = os.environ.get(secret_name.upper().replace('-', '_'))
+    if env_secret:
+        print(f"Using {secret_name} from environment variable")
+        return env_secret
+    
+    # Otherwise try Key Vault
     try:
         print(f"Retrieving secret '{secret_name}' from Key Vault: {KEY_VAULT_URI}")
+        credential = DefaultAzureCredential()
+        secret_client = SecretClient(vault_url=KEY_VAULT_URI, credential=credential)
         secret = secret_client.get_secret(secret_name)
-        print(f"Successfully retrieved secret '{secret_name}'")
+        print(f"Successfully retrieved secret '{secret_name}' from Key Vault")
         return secret.value
     except Exception as e:
-        print(f"ERROR retrieving secret {secret_name}: {e}")
-        import traceback
-        traceback.print_exc()
-        raise
+        print(f"WARNING: Could not retrieve secret {secret_name} from Key Vault or environment: {e}")
+        return None
 
-# Get connection strings from Key Vault
-print("Initializing connection strings from Key Vault...")
-COSMOS_CONNECTION_STRING = get_secret('CosmosConnectionString')
-STORAGE_CONNECTION_STRING = get_secret('StorageConnectionString')
-SQL_PASSWORD = get_secret('SqlPassword')  # Store SQL password in Key Vault
+# Get connection strings from Key Vault or environment variables
+print("Initializing connection strings...")
+COSMOS_CONNECTION_STRING = os.environ.get('COSMOS_CONNECTION_STRING') or get_secret('CosmosConnectionString')
+STORAGE_CONNECTION_STRING = os.environ.get('STORAGE_CONNECTION_STRING') or get_secret('StorageConnectionString')
+SQL_PASSWORD = os.environ.get('SQL_PASSWORD') or get_secret('SqlPassword')
+
+if not COSMOS_CONNECTION_STRING:
+    raise ValueError("COSMOS_CONNECTION_STRING not found in environment or Key Vault")
+if not STORAGE_CONNECTION_STRING:
+    raise ValueError("STORAGE_CONNECTION_STRING not found in environment or Key Vault")
+
 print("Connection strings retrieved successfully")
 
 cosmos_client = None
