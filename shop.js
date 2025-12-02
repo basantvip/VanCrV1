@@ -1,5 +1,8 @@
 // Shop script: loads products from backend API and shows products filtered by ?category=...
-const API_BASE = 'http://localhost:8000';
+// Use current hostname for mobile device support, fallback to localhost
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+  ? 'http://localhost:8000' 
+  : `http://${window.location.hostname}:8000`;
 
 async function loadProducts() {
   try {
