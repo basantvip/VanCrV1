@@ -27,6 +27,25 @@
   </style>
 </head>
 <body>
+  <script src="auth-nav.js"></script>
+  <script>
+    // Check if user is admin on page load
+    (function() {
+      const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (!userStr) {
+        alert('Please login to access this page.');
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      const user = JSON.parse(userStr);
+      if (user.accessLevel !== 'Admin') {
+        alert('Access denied. This page is only accessible to administrators.');
+        window.location.href = 'index.html';
+        return;
+      }
+    })();
+  </script>
   <div class="top-banner" role="region" aria-label="Announcement">
     <img class="banner-logo" src="assets/images/vancr.png" alt="VanCr logo">
     <div class="banner-inner">
@@ -36,7 +55,7 @@
   <header class="site-header">
     <nav class="nav">
       <a href="index.html">Home</a>
-      <a href="add-product.html">Add Product</a>
+      <a href="catalog.html">Catalog</a>
       <a href="contact.html">Contact Us</a>
     </nav>
   </header>
@@ -179,9 +198,24 @@
       formData.append('occasions', JSON.stringify(occasions));
 
       try {
+        // Get user info for authorization header
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        
+        if (!user || !user.userId) {
+          statusDiv.textContent = '❌ Please login to add products.';
+          statusDiv.style.cssText = 'padding:12px; background:#ffe6e6; color:#c40000; border-radius:6px;';
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+          return;
+        }
+        
         const endpoint = window.PRODUCT_API_ENDPOINT || 'http://localhost:8000/api/add-product';
         const res = await fetch(endpoint, {
           method: 'POST',
+          headers: {
+            'X-User-Id': user.userId
+          },
           body: formData
         });
 

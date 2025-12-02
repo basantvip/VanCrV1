@@ -1,6 +1,6 @@
 """
 VanCr Backend API - Contact Form & Product Management Service
-Python Flask app with Azure Cosmos DB and Azure Blob Storage
+Python Flask app with Azure Cosmos DB, Azure Blob Storage, and Azure SQL Database
 Uses Azure Key Vault with Managed Identity for secure secret management
 """
 import os
@@ -13,6 +13,8 @@ from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 from azure.keyvault.secrets import SecretClient
 from werkzeug.utils import secure_filename
+import pyodbc
+import bcrypt
 
 # Flask app with static files from parent directory
 app = Flask(__name__, static_folder='..', static_url_path='')
@@ -24,6 +26,9 @@ KEY_VAULT_URI = f"https://{KEY_VAULT_NAME}.vault.azure.net/"
 DATABASE_NAME = os.environ.get('DATABASE_NAME', 'VanCrDB')
 CONTAINER_NAME = os.environ.get('CONTAINER_NAME', 'ContactSubmissions')
 PRODUCTS_CONTAINER = 'Products'
+SQL_SERVER = 'vancrsql2025.database.windows.net'
+SQL_DATABASE = 'VanCr'
+SQL_USERNAME = 'vancradmin'
 BLOB_CONTAINER = 'product-images'
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -50,6 +55,7 @@ def get_secret(secret_name):
 print("Initializing connection strings from Key Vault...")
 COSMOS_CONNECTION_STRING = get_secret('CosmosConnectionString')
 STORAGE_CONNECTION_STRING = get_secret('StorageConnectionString')
+SQL_PASSWORD = get_secret('SqlPassword')  # Store SQL password in Key Vault
 print("Connection strings retrieved successfully")
 
 cosmos_client = None
@@ -71,6 +77,23 @@ def init_cosmos():
         # No offer_throughput for serverless Cosmos DB
     )
     app.logger.info(f"Cosmos initialized: {DATABASE_NAME}/{CONTAINER_NAME}")
+
+def get_sql_connection():
+    """Get SQL Server connection."""
+    try:
+        # Use SQL_PASSWORD from Key Vault if available, otherwise fallback
+        password = SQL_PASSWORD if SQL_PASSWORD else 'VanCr@2025SecurePass!'
+        connection_string = (
+            f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+            f"SERVER={SQL_SERVER};"
+            f"DATABASE={SQL_DATABASE};"
+            f"UID={SQL_USERNAME};"
+            f"PWD={password}"
+        )
+        return pyodbc.connect(connection_string)
+    except Exception as e:
+        app.logger.error(f"SQL connection error: {e}")
+        raise
 
 @app.route('/')
 def index():
@@ -167,6 +190,22 @@ def allowed_file(filename):
 def add_product():
     """Add product with image upload to Azure Blob Storage and metadata to Cosmos DB."""
     try:
+        # Check authorization - only Admin users can add products
+        user_id = request.headers.get('X-User-Id')
+        if not user_id:
+            return jsonify({'ok': False, 'error': 'Unauthorized. Please login.'}), 401
+        
+        # Verify user is Admin
+        conn = get_sql_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT access_level FROM Users WHERE user_id = ? AND active = 1", (user_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not row or row[0] != 'Admin':
+            return jsonify({'ok': False, 'error': 'Unauthorized. Admin access required.'}), 403
+        
         # Validate form data
         if 'itemImage' not in request.files:
             return jsonify({'ok': False, 'error': 'No image file provided'}), 400
@@ -309,8 +348,24 @@ def get_products():
 
 @app.route('/api/products/<product_id>', methods=['DELETE'])
 def delete_product(product_id):
-    """Delete a product by ID."""
+    """Delete a product by ID - Admin only."""
     try:
+        # Check authorization - only Admin users can delete products
+        user_id = request.headers.get('X-User-Id')
+        if not user_id:
+            return jsonify({'ok': False, 'error': 'Unauthorized. Please login.'}), 401
+        
+        # Verify user is Admin
+        conn = get_sql_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT access_level FROM Users WHERE user_id = ? AND active = 1", (user_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not row or row[0] != 'Admin':
+            return jsonify({'ok': False, 'error': 'Unauthorized. Admin access required.'}), 403
+        
         if database is None:
             init_cosmos()
         
@@ -323,6 +378,194 @@ def delete_product(product_id):
         
     except Exception as e:
         app.logger.exception('delete_product error')
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/products/<product_id>', methods=['PUT'])
+def update_product(product_id):
+    """Update a product - Admin only."""
+    try:
+        # Check authorization - only Admin users can update products
+        user_id = request.headers.get('X-User-Id')
+        if not user_id:
+            return jsonify({'ok': False, 'error': 'Unauthorized. Please login.'}), 401
+        
+        # Verify user is Admin
+        conn = get_sql_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT access_level FROM Users WHERE user_id = ? AND active = 1", (user_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not row or row[0] != 'Admin':
+            return jsonify({'ok': False, 'error': 'Unauthorized. Admin access required.'}), 403
+        
+        data = request.get_json(force=True) or {}
+        
+        if database is None:
+            init_cosmos()
+        
+        products_container = database.get_container_client(PRODUCTS_CONTAINER)
+        
+        # Get existing product
+        existing_product = products_container.read_item(item=product_id, partition_key=product_id)
+        
+        # Update fields if provided
+        if 'price' in data:
+            existing_product['price'] = float(data['price'])
+        if 'categories' in data:
+            existing_product['categories'] = data['categories']
+        if 'ageGroups' in data:
+            existing_product['ageGroups'] = data['ageGroups']
+        if 'seasons' in data:
+            existing_product['seasons'] = data['seasons']
+        if 'occasions' in data:
+            existing_product['occasions'] = data['occasions']
+        
+        existing_product['updatedAt'] = datetime.now(timezone.utc).isoformat()
+        
+        # Update the product
+        products_container.replace_item(item=product_id, body=existing_product)
+        
+        return jsonify({'ok': True, 'message': 'Product updated successfully', 'product': existing_product}), 200
+        
+    except Exception as e:
+        app.logger.exception('update_product error')
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/signup', methods=['POST'])
+def signup():
+    """Create new user account with hashed password."""
+    try:
+        data = request.get_json(force=True) or {}
+        first_name = data.get('firstName', '').strip()
+        last_name = data.get('lastName', '').strip()
+        email = data.get('email', '').strip().lower()
+        phone = data.get('phone', '').strip() if data.get('phone') else None
+        password = data.get('password', '')
+        
+        # Validate required fields
+        if not all([first_name, last_name, email, password]):
+            return jsonify({'ok': False, 'error': 'Missing required fields'}), 400
+        
+        # Hash password
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        # Create user in SQL database
+        conn = get_sql_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # Generate new user ID
+            user_id = str(uuid.uuid4())
+            
+            # Insert user
+            cursor.execute("""
+                INSERT INTO Users (user_id, email, first_name, last_name, phone, active, access_level)
+                VALUES (?, ?, ?, ?, ?, 1, 'Standard')
+            """, (user_id, email, first_name, last_name, phone))
+            
+            # Insert credentials
+            cursor.execute("""
+                INSERT INTO User_Credentials (user_id, password_hash)
+                VALUES (?, ?)
+            """, (user_id, password_hash))
+            
+            conn.commit()
+            
+            return jsonify({
+                'ok': True,
+                'userId': user_id,
+                'message': 'Account created successfully'
+            }), 201
+            
+        except pyodbc.IntegrityError as e:
+            conn.rollback()
+            if 'email' in str(e).lower():
+                return jsonify({'ok': False, 'error': 'Email already exists'}), 400
+            elif 'phone' in str(e).lower():
+                return jsonify({'ok': False, 'error': 'Phone number already exists'}), 400
+            else:
+                return jsonify({'ok': False, 'error': 'User already exists'}), 400
+        finally:
+            cursor.close()
+            conn.close()
+            
+    except Exception as e:
+        app.logger.exception('signup error')
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    """Authenticate user with email and password."""
+    try:
+        data = request.get_json(force=True) or {}
+        email = data.get('email', '').strip().lower()
+        password = data.get('password', '')
+        
+        if not email or not password:
+            return jsonify({'ok': False, 'error': 'Email and password required'}), 400
+        
+        conn = get_sql_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # Get user and credentials
+            cursor.execute("""
+                SELECT u.user_id, u.email, u.first_name, u.last_name, u.active, u.access_level,
+                       uc.password_hash, uc.failed_login_count
+                FROM Users u
+                INNER JOIN User_Credentials uc ON u.user_id = uc.user_id
+                WHERE u.email = ? AND u.deleted_at IS NULL
+            """, (email,))
+            
+            row = cursor.fetchone()
+            
+            if not row:
+                return jsonify({'ok': False, 'error': 'Invalid email or password'}), 401
+            
+            user_id, email, first_name, last_name, active, access_level, password_hash, failed_login_count = row
+            
+            # Check if account is active
+            if not active:
+                return jsonify({'ok': False, 'error': 'Account is inactive'}), 403
+            
+            # Verify password
+            if not bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8')):
+                # Increment failed login count
+                cursor.execute("""
+                    UPDATE User_Credentials
+                    SET failed_login_count = failed_login_count + 1
+                    WHERE user_id = ?
+                """, (user_id,))
+                conn.commit()
+                
+                return jsonify({'ok': False, 'error': 'Invalid email or password'}), 401
+            
+            # Successful login - update last login and reset failed attempts
+            cursor.execute("""
+                UPDATE User_Credentials
+                SET last_login_at = GETUTCDATE(), failed_login_count = 0
+                WHERE user_id = ?
+            """, (user_id,))
+            conn.commit()
+            
+            return jsonify({
+                'ok': True,
+                'userId': user_id,
+                'email': email,
+                'firstName': first_name,
+                'lastName': last_name,
+                'accessLevel': access_level,
+                'message': 'Login successful'
+            }), 200
+            
+        finally:
+            cursor.close()
+            conn.close()
+            
+    except Exception as e:
+        app.logger.exception('login error')
         return jsonify({'ok': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
