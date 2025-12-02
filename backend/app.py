@@ -6,7 +6,7 @@ Uses Azure Key Vault with Managed Identity for secure secret management
 import os
 import uuid
 from datetime import datetime, timezone
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from azure.cosmos import CosmosClient, PartitionKey
 from azure.identity import DefaultAzureCredential
@@ -14,7 +14,8 @@ from azure.storage.blob import BlobServiceClient
 from azure.keyvault.secrets import SecretClient
 from werkzeug.utils import secure_filename
 
-app = Flask(__name__)
+# Flask app with static files from parent directory
+app = Flask(__name__, static_folder='..', static_url_path='')
 CORS(app)  # Enable CORS for all origins (restrict in production via CORS config)
 
 # Environment variables
@@ -35,15 +36,21 @@ secret_client = SecretClient(vault_url=KEY_VAULT_URI, credential=credential)
 def get_secret(secret_name):
     """Retrieve secret from Azure Key Vault."""
     try:
+        print(f"Retrieving secret '{secret_name}' from Key Vault: {KEY_VAULT_URI}")
         secret = secret_client.get_secret(secret_name)
+        print(f"Successfully retrieved secret '{secret_name}'")
         return secret.value
     except Exception as e:
-        print(f"Error retrieving secret {secret_name}: {e}")
-        return None
+        print(f"ERROR retrieving secret {secret_name}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 # Get connection strings from Key Vault
+print("Initializing connection strings from Key Vault...")
 COSMOS_CONNECTION_STRING = get_secret('CosmosConnectionString')
 STORAGE_CONNECTION_STRING = get_secret('StorageConnectionString')
+print("Connection strings retrieved successfully")
 
 cosmos_client = None
 database = None
@@ -67,6 +74,26 @@ def init_cosmos():
 
 @app.route('/')
 def index():
+    """Serve the home page."""
+    try:
+        return send_from_directory(os.path.join(os.path.dirname(__file__), '..'), 'index.html')
+    except Exception as e:
+        return jsonify({'error': str(e)}), 404
+
+@app.route('/<path:filename>')
+def serve_static(filename):
+    """Serve static files (HTML, CSS, JS, images)."""
+    try:
+        # Don't serve API routes as static files
+        if filename.startswith('api/'):
+            return jsonify({'error': 'Not found'}), 404
+        return send_from_directory(os.path.join(os.path.dirname(__file__), '..'), filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 404
+
+@app.route('/api/')
+def api_index():
+    """API status endpoint."""
     return jsonify({
         'service': 'VanCr Contact API',
         'status': 'running',
