@@ -1,12 +1,51 @@
-// Simple shop script: loads data/products.json and shows products filtered by ?category=...
+// Shop script: loads products from backend API and shows products filtered by ?category=...
+const API_BASE = 'http://localhost:8000';
+
 async function loadProducts() {
   try {
-    const res = await fetch('data/products.json');
+    // Try loading from backend API first
+    const res = await fetch(`${API_BASE}/api/products`);
     const data = await res.json();
-    return data;
+    if (data.ok && data.products) {
+      // Transform backend products to match expected format
+      return data.products.map(p => {
+        // Normalize age groups to remove descriptions like "(5-12y)"
+        const normalizedAgeGroups = (p.ageGroups || []).map(ag => {
+          if (ag.includes('(')) return ag.split('(')[0].trim();
+          return ag;
+        });
+        
+        return {
+          id: p.id,
+          name: p.itemName || `${p.categories && p.categories.length > 0 ? p.categories.join('/') : 'Item'} - ₹${p.price || 0}`,
+          image: p.imageUrl,
+          price: p.price || 0,
+          description: p.description || '',
+          mainCategory: p.categories && p.categories.length > 0 ? p.categories[0] : 'Uncategorized',
+          categories: p.categories || [],
+          subCategory: p.subCategory || '',
+          ageGroup: normalizedAgeGroups.length > 0 ? normalizedAgeGroups[0] : '',
+          ageGroups: normalizedAgeGroups,
+          season: p.seasons && p.seasons.length > 0 ? p.seasons[0] : '',
+          seasons: p.seasons || [],
+          occasion: p.occasions && p.occasions.length > 0 ? p.occasions[0] : '',
+          occasions: p.occasions || []
+        };
+      });
+    }
+    // Fallback to static JSON if API fails
+    const fallbackRes = await fetch('data/products.json');
+    return await fallbackRes.json();
   } catch (e) {
     console.error('Failed to load products', e);
-    return [];
+    // Try fallback to static JSON
+    try {
+      const fallbackRes = await fetch('data/products.json');
+      return await fallbackRes.json();
+    } catch (fallbackError) {
+      console.error('Fallback also failed', fallbackError);
+      return [];
+    }
   }
 }
 
@@ -53,12 +92,33 @@ function renderProducts(list) {
   list.forEach(p => {
     const card = document.createElement('div');
     card.className = 'product-card';
+    const displayName = p.name || (p.categories && p.categories.length > 0 ? p.categories.join('/') : 'Product');
     card.innerHTML = `
-      <img src="${p.image || 'assets/images/p001.png'}" alt="${p.name}" />
-      <h4>${p.name}</h4>
-      <p class="price">$${p.price}</p>
-      <p class="desc">${p.description || ''}</p>
+      <div class="product-image-container">
+        <img src="${p.image || 'assets/images/p001.png'}" alt="${displayName}" class="product-image" />
+        <div class="zoom-icon">🔍</div>
+      </div>
+      <p class="price" style="font-size: 1.4rem; font-weight: 700; color: #2d7a3f; margin: 8px 0;">₹${p.price || 0}</p>
+      ${p.description ? `<p class="desc" style="font-size: 0.9rem; color: #666;">${p.description}</p>` : ''}
     `;
+    
+    // Add mouse move event for zoom effect
+    const container = card.querySelector('.product-image-container');
+    const img = card.querySelector('.product-image');
+    
+    container.addEventListener('mousemove', (e) => {
+      const rect = container.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      img.style.transformOrigin = `${x}% ${y}%`;
+      img.style.transform = 'scale(2.5)';
+    });
+    
+    container.addEventListener('mouseleave', () => {
+      img.style.transform = 'scale(1)';
+      img.style.transformOrigin = 'center center';
+    });
+    
     target.appendChild(card);
   });
 }
@@ -69,11 +129,49 @@ function applyFilters() {
   const occChecks = Array.from(document.querySelectorAll('.filter-occasion:checked')).map(i => i.value);
 
   let filtered = PRODUCTS.slice();
-  if (CURRENT_MAIN) filtered = filtered.filter(p => p.mainCategory === CURRENT_MAIN);
-  if (CURRENT_SUB) filtered = filtered.filter(p => p.subCategory === CURRENT_SUB);
-  if (ageChecks.length) filtered = filtered.filter(p => ageChecks.includes(p.ageGroup));
-  if (seasonChecks.length) filtered = filtered.filter(p => seasonChecks.includes(p.season));
-  if (occChecks.length) filtered = filtered.filter(p => occChecks.includes(p.occasion));
+  
+  // Filter by main category
+  if (CURRENT_MAIN) {
+    filtered = filtered.filter(p => 
+      p.mainCategory === CURRENT_MAIN || 
+      (p.categories && p.categories.includes(CURRENT_MAIN))
+    );
+  }
+  
+  // Filter by subcategory
+  if (CURRENT_SUB) {
+    filtered = filtered.filter(p => p.subCategory === CURRENT_SUB);
+  }
+  
+  // Filter by age groups (check if product has any of the selected age groups)
+  if (ageChecks.length) {
+    filtered = filtered.filter(p => {
+      if (p.ageGroups && p.ageGroups.length > 0) {
+        return p.ageGroups.some(age => ageChecks.includes(age));
+      }
+      return ageChecks.includes(p.ageGroup);
+    });
+  }
+  
+  // Filter by seasons
+  if (seasonChecks.length) {
+    filtered = filtered.filter(p => {
+      if (p.seasons && p.seasons.length > 0) {
+        return p.seasons.some(season => seasonChecks.includes(season));
+      }
+      return seasonChecks.includes(p.season);
+    });
+  }
+  
+  // Filter by occasions
+  if (occChecks.length) {
+    filtered = filtered.filter(p => {
+      if (p.occasions && p.occasions.length > 0) {
+        return p.occasions.some(occ => occChecks.includes(occ));
+      }
+      return occChecks.includes(p.occasion);
+    });
+  }
 
   renderProducts(filtered);
 }

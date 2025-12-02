@@ -1,11 +1,13 @@
-# VanCr Deployment Guide - Python Backend + Cosmos DB
+# VanCr Deployment Guide - Python Backend + Cosmos DB + Key Vault
 
-Complete step-by-step guide to deploy the VanCr contact form backend.
+Complete step-by-step guide to deploy the VanCr contact form backend with secure secret management.
 
 ## Quick Overview
 - **Backend**: Python Flask on Azure App Service (Linux)
 - **Database**: Azure Cosmos DB (serverless, SQL API)
-- **Authentication**: Managed Identity (no keys/secrets)
+- **Storage**: Azure Blob Storage for product images
+- **Secrets**: Azure Key Vault with Managed Identity
+- **Authentication**: Managed Identity (no keys/secrets in code)
 - **Deployment**: GitHub Actions or Azure CLI
 
 ## Prerequisites
@@ -31,11 +33,20 @@ az account set --subscription "<your-subscription-id>"
 RG=rg-vancr-prod
 LOC=centralindia
 COSMOS_ACCOUNT=vancr-cosmos
+STORAGE_ACCOUNT=vancrstore
+KV_NAME=kv-vancr-prod
 APP_NAME=vancr-backend
 PLAN=vancr-plan
 
 echo "Creating resource group..."
 az group create -n $RG -l $LOC
+
+echo "Creating Key Vault with RBAC..."
+az keyvault create \
+  -n $KV_NAME \
+  -g $RG \
+  -l $LOC \
+  --enable-rbac-authorization true
 
 echo "Creating Cosmos DB account (serverless)..."
 az cosmosdb create \
@@ -45,6 +56,16 @@ az cosmosdb create \
   --kind GlobalDocumentDB \
   --capabilities EnableServerless \
   --default-consistency-level Session
+
+echo "Creating Storage Account for product images..."
+az storage account create \
+  -n $STORAGE_ACCOUNT \
+  -g $RG \
+  -l $LOC \
+  --sku Standard_LRS \
+  --kind StorageV2 \
+  --access-tier Hot \
+  --allow-blob-public-access true
 
 echo "Creating App Service Plan (B1 Linux)..."
 az appservice plan create \
@@ -76,14 +97,26 @@ az cosmosdb sql role assignment create \
   --principal-id $PRINCIPAL_ID \
   --scope "/"
 
-echo "Configuring app settings..."
-COSMOS_ENDPOINT=$(az cosmosdb show -n $COSMOS_ACCOUNT -g $RG --query documentEndpoint -o tsv)
+echo "Assigning Key Vault Secrets User role to App Service..."
+KV_SCOPE=$(az keyvault show -n $KV_NAME -g $RG --query id -o tsv)
+az role assignment create \
+  --role "Key Vault Secrets User" \
+  --assignee $PRINCIPAL_ID \
+  --scope $KV_SCOPE
 
+echo "Storing secrets in Key Vault..."
+COSMOS_CONN=$(az cosmosdb keys list -n $COSMOS_ACCOUNT -g $RG --type connection-strings --query "connectionStrings[0].connectionString" -o tsv)
+STORAGE_CONN=$(az storage account show-connection-string -n $STORAGE_ACCOUNT -g $RG --query connectionString -o tsv)
+
+az keyvault secret set --vault-name $KV_NAME --name CosmosConnectionString --value "$COSMOS_CONN"
+az keyvault secret set --vault-name $KV_NAME --name StorageConnectionString --value "$STORAGE_CONN"
+
+echo "Configuring app settings..."
 az webapp config appsettings set \
   -n $APP_NAME \
   -g $RG \
   --settings \
-    COSMOS_ENDPOINT="$COSMOS_ENDPOINT" \
+    KEY_VAULT_NAME="$KV_NAME" \
     DATABASE_NAME="VanCrDB" \
     CONTAINER_NAME="ContactSubmissions" \
     SCM_DO_BUILD_DURING_DEPLOYMENT=true
@@ -97,6 +130,7 @@ az webapp cors add -n $APP_NAME -g $RG --allowed-origins '*'
 echo ""
 echo "✅ Infrastructure provisioned!"
 echo "App URL: https://$APP_NAME.azurewebsites.net"
+echo "Blob endpoint: https://$STORAGE_ACCOUNT.blob.core.windows.net"
 echo "Next: Deploy code via GitHub Actions or CLI"
 ```
 

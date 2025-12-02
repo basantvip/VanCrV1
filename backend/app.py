@@ -1,7 +1,7 @@
 """
-VanCr Backend API - Contact Form Service
-Python Flask app with Azure Cosmos DB (Managed Identity auth)
-No secrets/keys in code - uses DefaultAzureCredential (Azure AD)
+VanCr Backend API - Contact Form & Product Management Service
+Python Flask app with Azure Cosmos DB and Azure Blob Storage
+Uses Azure Key Vault with Managed Identity for secure secret management
 """
 import os
 import uuid
@@ -10,18 +10,41 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from azure.cosmos import CosmosClient, PartitionKey
 from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient
+from azure.keyvault.secrets import SecretClient
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all origins (restrict in production via CORS config)
 
-# Environment variables (set in App Service Configuration)
-COSMOS_ENDPOINT = os.environ.get('COSMOS_ENDPOINT')  # e.g. https://vancr-cosmos.documents.azure.com:443/
-COSMOS_CONNECTION_STRING = os.environ.get('COSMOS_CONNECTION_STRING')  # For local testing
+# Environment variables
+KEY_VAULT_NAME = os.environ.get('KEY_VAULT_NAME', 'kv-vancr-prod')
+KEY_VAULT_URI = f"https://{KEY_VAULT_NAME}.vault.azure.net/"
 DATABASE_NAME = os.environ.get('DATABASE_NAME', 'VanCrDB')
 CONTAINER_NAME = os.environ.get('CONTAINER_NAME', 'ContactSubmissions')
+PRODUCTS_CONTAINER = 'Products'
+BLOB_CONTAINER = 'product-images'
 
-# Initialize Cosmos client with Managed Identity or connection string
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+# Initialize Azure credentials and Key Vault client
 credential = DefaultAzureCredential()
+secret_client = SecretClient(vault_url=KEY_VAULT_URI, credential=credential)
+
+# Retrieve secrets from Key Vault
+def get_secret(secret_name):
+    """Retrieve secret from Azure Key Vault."""
+    try:
+        secret = secret_client.get_secret(secret_name)
+        return secret.value
+    except Exception as e:
+        print(f"Error retrieving secret {secret_name}: {e}")
+        return None
+
+# Get connection strings from Key Vault
+COSMOS_CONNECTION_STRING = get_secret('CosmosConnectionString')
+STORAGE_CONNECTION_STRING = get_secret('StorageConnectionString')
+
 cosmos_client = None
 database = None
 container = None
@@ -30,13 +53,10 @@ def init_cosmos():
     """Initialize Cosmos DB client, database, and container."""
     global cosmos_client, database, container
     
-    # Use connection string for local dev, Managed Identity for production
-    if COSMOS_CONNECTION_STRING:
-        cosmos_client = CosmosClient.from_connection_string(COSMOS_CONNECTION_STRING)
-    elif COSMOS_ENDPOINT:
-        cosmos_client = CosmosClient(COSMOS_ENDPOINT, credential=credential)
-    else:
-        raise ValueError("COSMOS_ENDPOINT or COSMOS_CONNECTION_STRING environment variable is required")
+    if not COSMOS_CONNECTION_STRING:
+        raise ValueError("Could not retrieve Cosmos DB connection string from Key Vault")
+    
+    cosmos_client = CosmosClient.from_connection_string(COSMOS_CONNECTION_STRING)
     database = cosmos_client.create_database_if_not_exists(id=DATABASE_NAME)
     container = database.create_container_if_not_exists(
         id=CONTAINER_NAME,
@@ -112,10 +132,177 @@ def health():
     except Exception as e:
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 503
 
+def allowed_file(filename):
+    """Check if file extension is allowed."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/api/add-product', methods=['POST'])
+def add_product():
+    """Add product with image upload to Azure Blob Storage and metadata to Cosmos DB."""
+    try:
+        # Validate form data
+        if 'itemImage' not in request.files:
+            return jsonify({'ok': False, 'error': 'No image file provided'}), 400
+        
+        file = request.files['itemImage']
+        if file.filename == '':
+            return jsonify({'ok': False, 'error': 'No image selected'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'ok': False, 'error': 'Invalid file type. Allowed: PNG, JPG, JPEG, GIF, WEBP'}), 400
+        
+        # Validate price
+        price = request.form.get('price', '').strip()
+        if not price:
+            return jsonify({'ok': False, 'error': 'Price is required'}), 400
+        
+        try:
+            price = float(price)
+            if price < 0:
+                return jsonify({'ok': False, 'error': 'Price cannot be negative'}), 400
+        except ValueError:
+            return jsonify({'ok': False, 'error': 'Invalid price format'}), 400
+        
+        # Parse JSON arrays
+        import json
+        categories = json.loads(request.form.get('categories', '[]'))
+        age_groups = json.loads(request.form.get('ageGroups', '[]'))
+        seasons = json.loads(request.form.get('seasons', '[]'))
+        occasions = json.loads(request.form.get('occasions', '[]'))
+        
+        if not categories or not age_groups:
+            return jsonify({'ok': False, 'error': 'At least one category and age group required'}), 400
+        
+        # Generate unique item ID
+        item_id = str(uuid.uuid4())
+        
+        # Upload image to Azure Blob Storage
+        if not STORAGE_CONNECTION_STRING:
+            return jsonify({'ok': False, 'error': 'Storage not configured'}), 500
+        
+        blob_service_client = BlobServiceClient.from_connection_string(STORAGE_CONNECTION_STRING)
+        container_client = blob_service_client.get_container_client(BLOB_CONTAINER)
+        
+        # Create container if doesn't exist
+        try:
+            container_client.create_container(public_access='blob')
+        except Exception:
+            pass  # Container already exists
+        
+        # Secure filename and create blob name
+        file_ext = secure_filename(file.filename).rsplit('.', 1)[1].lower()
+        blob_name = f"products/{item_id}.{file_ext}"
+        
+        blob_client = container_client.get_blob_client(blob_name)
+        blob_client.upload_blob(file, overwrite=True)
+        
+        # Get public URL
+        image_url = blob_client.url
+        
+        # Initialize Cosmos if needed
+        if database is None:
+            init_cosmos()
+        
+        # Ensure Products container exists
+        products_container = database.create_container_if_not_exists(
+            id=PRODUCTS_CONTAINER,
+            partition_key=PartitionKey(path="/id")
+        )
+        
+        # Create product document
+        product_doc = {
+            'id': item_id,
+            'price': price,
+            'imageUrl': image_url,
+            'categories': categories,
+            'ageGroups': age_groups,
+            'seasons': seasons,
+            'occasions': occasions,
+            'createdAt': datetime.now(timezone.utc).isoformat(),
+            'type': 'product'
+        }
+        
+        products_container.create_item(body=product_doc)
+        
+        return jsonify({
+            'ok': True,
+            'itemId': item_id,
+            'price': price,
+            'imageUrl': image_url
+        }), 200
+        
+    except Exception as e:
+        app.logger.exception('add_product error')
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/products', methods=['GET'])
+def get_products():
+    """Get products with optional filters."""
+    try:
+        if database is None:
+            init_cosmos()
+        
+        # Check if Products container exists
+        try:
+            products_container = database.get_container_client(PRODUCTS_CONTAINER)
+        except Exception:
+            return jsonify({'ok': True, 'products': []}), 200
+        
+        # Build query based on filters
+        category = request.args.get('category')
+        age_group = request.args.get('ageGroup')
+        season = request.args.get('season')
+        occasion = request.args.get('occasion')
+        
+        # Base query
+        query = "SELECT * FROM c WHERE c.type = 'product'"
+        
+        # Add filters (Cosmos SQL supports ARRAY_CONTAINS)
+        if category:
+            query += f" AND ARRAY_CONTAINS(c.categories, '{category}')"
+        if age_group:
+            query += f" AND ARRAY_CONTAINS(c.ageGroups, '{age_group}')"
+        if season:
+            query += f" AND ARRAY_CONTAINS(c.seasons, '{season}')"
+        if occasion:
+            query += f" AND ARRAY_CONTAINS(c.occasions, '{occasion}')"
+        
+        query += " ORDER BY c.createdAt DESC"
+        
+        items = list(products_container.query_items(
+            query=query,
+            enable_cross_partition_query=True
+        ))
+        
+        return jsonify({'ok': True, 'products': items}), 200
+        
+    except Exception as e:
+        app.logger.exception('get_products error')
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+@app.route('/api/products/<product_id>', methods=['DELETE'])
+def delete_product(product_id):
+    """Delete a product by ID."""
+    try:
+        if database is None:
+            init_cosmos()
+        
+        products_container = database.get_container_client(PRODUCTS_CONTAINER)
+        
+        # Delete the product
+        products_container.delete_item(item=product_id, partition_key=product_id)
+        
+        return jsonify({'ok': True, 'message': f'Product {product_id} deleted'}), 200
+        
+    except Exception as e:
+        app.logger.exception('delete_product error')
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
 if __name__ == '__main__':
     # Don't initialize Cosmos on startup in debug mode (causes double init)
     # It will initialize on first request instead
     
     # Local development server
     port = int(os.environ.get('PORT', 8000))
-    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=port, debug=False)
+

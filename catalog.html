@@ -21,6 +21,7 @@
       <a href="catalog.html">Catalog</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
+      <a href="add-product.html">➕ Add Product</a>
       <a class="cart-link" href="cart.html">🛒 <span id="cart-count">0</span></a>
     </nav>
   </header>
@@ -32,33 +33,38 @@
     <input id="search" type="search" placeholder="Search products" />
     <select id="category">
       <option value="">All Categories</option>
-      <option>Men</option>
-      <option>Women</option>
-      <option>Kids</option>
-      <option>Accessories</option>
+      <option value="Girls">Girls</option>
+      <option value="Boys">Boys</option>
+      <option value="Baby">Baby</option>
+      <option value="Accessories">Accessories</option>
+      <option value="Footwear">Footwear</option>
     </select>
-    <select id="size">
-      <option value="">Any Size</option>
-      <option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option>
-      <option>28</option><option>30</option><option>32</option><option>34</option><option>36</option>
-      <option>2T</option><option>3T</option><option>4T</option><option>5</option><option>6</option>
-      <option>OS</option>
+    <select id="ageGroup">
+      <option value="">All Age Groups</option>
+      <option value="Newborn">Newborn (0-3 months)</option>
+      <option value="Infant">Infant (3-12 months)</option>
+      <option value="Toddler">Toddler (1-3 years)</option>
+      <option value="Preschool">Preschool (3-5 years)</option>
+      <option value="Kids">Kids (5+ years)</option>
     </select>
-    <select id="color">
-      <option value="">Any Color</option>
-      <option>Black</option><option>White</option><option>Navy</option><option>Heather Gray</option>
-      <option>Dark Wash</option><option>Wine</option><option>Teal</option><option>Ivory</option>
-      <option>Forest</option><option>Sky</option><option>Sunshine</option><option>Mint</option>
-      <option>Berry</option><option>Khaki</option><option>Oat</option><option>Charcoal</option><option>Olive</option>
+    <select id="season">
+      <option value="">All Seasons</option>
+      <option value="Spring">Spring</option>
+      <option value="Summer">Summer</option>
+      <option value="Fall">Fall</option>
+      <option value="Winter">Winter</option>
+      <option value="All Season">All Season</option>
     </select>
-    <select id="sort">
-      <option value="">Sort</option>
-      <option value="price-asc">Price: Low to High</option>
-      <option value="price-desc">Price: High to Low</option>
-      <option value="name-asc">Name: A → Z</option>
-      <option value="name-desc">Name: Z → A</option>
+    <select id="occasion">
+      <option value="">All Occasions</option>
+      <option value="Casual">Casual</option>
+      <option value="Formal">Formal</option>
+      <option value="Party">Party</option>
+      <option value="Traditional">Traditional</option>
+      <option value="Everyday">Everyday</option>
     </select>
   </div>
+  <div id="loading" style="display:none; text-align:center; padding:2rem;">Loading products...</div>
   <div id="catalog-grid" class="grid"></div>
 </section>
   </main>
@@ -70,5 +76,86 @@
     </div>
   </footer>
   <script src="app.js"></script>
+  <script>
+    // Catalog page - load products from backend
+    const API_BASE = 'http://localhost:8000';
+    const catalogGrid = document.getElementById('catalog-grid');
+    const loadingDiv = document.getElementById('loading');
+    const searchInput = document.getElementById('search');
+    const categorySelect = document.getElementById('category');
+    const ageGroupSelect = document.getElementById('ageGroup');
+    const seasonSelect = document.getElementById('season');
+    const occasionSelect = document.getElementById('occasion');
+
+    let allProducts = [];
+
+    async function loadProducts() {
+      try {
+        loadingDiv.style.display = 'block';
+        catalogGrid.innerHTML = '';
+        
+        const params = new URLSearchParams();
+        if (categorySelect.value) params.append('category', categorySelect.value);
+        if (ageGroupSelect.value) params.append('ageGroup', ageGroupSelect.value);
+        if (seasonSelect.value) params.append('season', seasonSelect.value);
+        if (occasionSelect.value) params.append('occasion', occasionSelect.value);
+        
+        const response = await fetch(`${API_BASE}/api/products?${params}`);
+        const data = await response.json();
+        
+        if (data.ok) {
+          allProducts = data.products;
+          displayProducts(allProducts);
+        } else {
+          catalogGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">Error loading products</p>';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        catalogGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">Failed to load products. Make sure backend is running.</p>';
+      } finally {
+        loadingDiv.style.display = 'none';
+      }
+    }
+
+    function displayProducts(products) {
+      if (products.length === 0) {
+        catalogGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">No products found</p>';
+        return;
+      }
+
+      catalogGrid.innerHTML = products.map(product => `
+        <div class="product-card">
+          <img src="${product.imageUrl}" alt="Product" style="width:100%; height:200px; object-fit:cover; border-radius:8px;" />
+          <h3 style="margin:0.5rem 0; font-size:1.2rem; color:#2c5f2d;">₹${product.price || 0}</h3>
+          <div style="font-size:0.85rem; color:#666;">
+            ${product.categories.map(c => `<span style="background:#e3f2fd; padding:2px 6px; border-radius:3px; margin:2px;">${c}</span>`).join('')}
+          </div>
+          <div style="font-size:0.75rem; color:#888; margin-top:0.25rem;">
+            ${product.ageGroups.join(', ')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterProducts() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const filtered = allProducts.filter(p => 
+        p.price.toString().includes(searchTerm) ||
+        p.categories.some(c => c.toLowerCase().includes(searchTerm)) ||
+        p.ageGroups.some(a => a.toLowerCase().includes(searchTerm))
+      );
+      displayProducts(filtered);
+    }
+
+    // Event listeners
+    categorySelect.addEventListener('change', loadProducts);
+    ageGroupSelect.addEventListener('change', loadProducts);
+    seasonSelect.addEventListener('change', loadProducts);
+    occasionSelect.addEventListener('change', loadProducts);
+    searchInput.addEventListener('input', filterProducts);
+
+    // Load products on page load
+    loadProducts();
+  </script>
 </body>
 </html>

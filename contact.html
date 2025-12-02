@@ -15,12 +15,10 @@
     </div>
   </div>
   <header class="site-header">
-    <a class="logo" href="index.html">Vanshika Creations - VanCr</a>
     <nav class="nav">
-      <a href="catalog.html">Catalog</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a class="cart-link" href="cart.html">🛒 <span id="cart-count">0</span></a>
+      <a href="index.html">Home</a>
+      <a href="add-product.html">Add Product</a>
+      <a href="contact.html">Contact Us</a>
     </nav>
   </header>
   <main class="content">
@@ -38,19 +36,19 @@
   <!-- Form will POST to server endpoint to save into contact.xlsx -->
   <form id="contact-form" method="post">
     <div>
-      <label>Subject<br><input type="text" id="c-subject" name="subject" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"/></label>
+      <label>Subject<br><input type="text" id="c-subject" name="subject" value="Product Inquiry" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"/></label>
     </div>
     <div style="margin-top:8px;">
-      <label>Contact Number<br><input type="tel" id="c-phone" name="phone" placeholder="+91-..." style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"/></label>
+      <label>Contact Number<br><input type="tel" id="c-phone" name="phone" value="+91-9876543210" placeholder="+91-..." style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"/></label>
     </div>
     <div style="margin-top:8px;">
-      <label>Email Address<br><input type="email" id="c-email" name="email" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"/></label>
+      <label>Email Address<br><input type="email" id="c-email" name="email" value="customer@example.com" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"/></label>
     </div>
     <div style="margin-top:8px;">
-      <label>Message<br><textarea id="c-message" name="message" rows="6" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;"></textarea></label>
+      <label>Message<br><textarea id="c-message" name="message" rows="6" required style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">Hi, I'm interested in learning more about your premium kids wear collection. Could you please share details about sizes and pricing?</textarea></label>
     </div>
     <div style="margin-top:12px;">
-      <button type="submit" class="btn primary">Submit</button>
+      <button type="submit" class="btn primary">Submit !</button>
     </div>
   </form>
 
@@ -64,8 +62,8 @@
     </div>
   </footer>
   <script>
-  // Backend API endpoint - Azure App Service
-  window.EMAIL_ENDPOINT = 'https://vancr-backend.azurewebsites.net/api/save-contact';
+  // Backend API endpoint - LOCAL TESTING (change back to Azure URL after testing)
+  window.EMAIL_ENDPOINT = 'http://localhost:8000/api/save-contact';
   </script>
   <script>
   // Contact form handler - POSTs submission to Azure backend (Cosmos DB)
