@@ -1,7 +1,7 @@
 """
 VanCr Backend API - Contact Form & Product Management Service
 Python Flask app with Azure Cosmos DB, Azure Blob Storage, and Azure SQL Database
-Uses Azure Key Vault with Managed Identity for secure secret management
+Uses Managed Identity for authentication to Azure services
 """
 import os
 import uuid
@@ -9,9 +9,9 @@ from datetime import datetime, timezone
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from azure.cosmos import CosmosClient, PartitionKey
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
 from azure.storage.blob import BlobServiceClient
-from azure.keyvault.secrets import SecretClient
+import struct
 from werkzeug.utils import secure_filename
 import pyodbc
 import bcrypt
@@ -21,88 +21,100 @@ app = Flask(__name__, static_folder='..', static_url_path='')
 CORS(app)  # Enable CORS for all origins (restrict in production via CORS config)
 
 # Environment variables
-KEY_VAULT_NAME = os.environ.get('KEY_VAULT_NAME', 'kv-vancr-prod')
-KEY_VAULT_URI = f"https://{KEY_VAULT_NAME}.vault.azure.net/"
+COSMOS_ACCOUNT = os.environ.get('COSMOS_ACCOUNT', 'vancr-cosmos')
+COSMOS_ENDPOINT = f"https://{COSMOS_ACCOUNT}.documents.azure.com:443/"
 DATABASE_NAME = os.environ.get('DATABASE_NAME', 'VanCrDB')
 CONTAINER_NAME = os.environ.get('CONTAINER_NAME', 'ContactSubmissions')
 PRODUCTS_CONTAINER = 'Products'
+
+STORAGE_ACCOUNT = os.environ.get('STORAGE_ACCOUNT', 'vancrstore')
+STORAGE_ENDPOINT = f"https://{STORAGE_ACCOUNT}.blob.core.windows.net"
+BLOB_CONTAINER = 'product-images'
+
 SQL_SERVER = 'vancrsql2025.database.windows.net'
 SQL_DATABASE = 'VanCr'
 SQL_USERNAME = 'vancradmin'
-BLOB_CONTAINER = 'product-images'
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-# Initialize Azure credentials and Key Vault client (only if not using env vars)
-def get_secret(secret_name):
-    """Retrieve secret from Azure Key Vault or environment variable."""
-    # First check if secret is in environment variable
-    env_secret = os.environ.get(secret_name.upper().replace('-', '_'))
-    if env_secret:
-        print(f"Using {secret_name} from environment variable")
-        return env_secret
-    
-    # Otherwise try Key Vault
-    try:
-        print(f"Retrieving secret '{secret_name}' from Key Vault: {KEY_VAULT_URI}")
-        credential = DefaultAzureCredential()
-        secret_client = SecretClient(vault_url=KEY_VAULT_URI, credential=credential)
-        secret = secret_client.get_secret(secret_name)
-        print(f"Successfully retrieved secret '{secret_name}' from Key Vault")
-        return secret.value
-    except Exception as e:
-        print(f"WARNING: Could not retrieve secret {secret_name} from Key Vault or environment: {e}")
-        return None
-
-# Get connection strings from Key Vault or environment variables
-print("Initializing connection strings...")
-COSMOS_CONNECTION_STRING = os.environ.get('COSMOS_CONNECTION_STRING') or get_secret('CosmosConnectionString')
-STORAGE_CONNECTION_STRING = os.environ.get('STORAGE_CONNECTION_STRING') or get_secret('StorageConnectionString')
-SQL_PASSWORD = os.environ.get('SQL_PASSWORD') or get_secret('SqlPassword')
-
-if not COSMOS_CONNECTION_STRING:
-    raise ValueError("COSMOS_CONNECTION_STRING not found in environment or Key Vault")
-if not STORAGE_CONNECTION_STRING:
-    raise ValueError("STORAGE_CONNECTION_STRING not found in environment or Key Vault")
-
-print("Connection strings retrieved successfully")
+# Initialize Azure Managed Identity credential
+print("Initializing Azure Managed Identity...")
+try:
+    # Try Managed Identity first (for Azure), then default credential (for local dev)
+    credential = DefaultAzureCredential()
+    print("✓ Azure credential initialized")
+except Exception as e:
+    print(f"WARNING: Could not initialize Azure credential: {e}")
+    credential = None
 
 cosmos_client = None
 database = None
 container = None
+blob_service_client = None
 
 def init_cosmos():
-    """Initialize Cosmos DB client, database, and container."""
+    """Initialize Cosmos DB client using Managed Identity."""
     global cosmos_client, database, container
     
-    if not COSMOS_CONNECTION_STRING:
-        raise ValueError("Could not retrieve Cosmos DB connection string from Key Vault")
+    if not credential:
+        raise ValueError("Azure credential not initialized")
     
-    cosmos_client = CosmosClient.from_connection_string(COSMOS_CONNECTION_STRING)
+    print(f"Connecting to Cosmos DB: {COSMOS_ENDPOINT}")
+    cosmos_client = CosmosClient(COSMOS_ENDPOINT, credential=credential)
     database = cosmos_client.create_database_if_not_exists(id=DATABASE_NAME)
     container = database.create_container_if_not_exists(
         id=CONTAINER_NAME,
         partition_key=PartitionKey(path="/id")
-        # No offer_throughput for serverless Cosmos DB
     )
-    app.logger.info(f"Cosmos initialized: {DATABASE_NAME}/{CONTAINER_NAME}")
+    print(f"✓ Cosmos DB initialized: {DATABASE_NAME}/{CONTAINER_NAME}")
+
+def init_blob_storage():
+    """Initialize Blob Storage client using Managed Identity."""
+    global blob_service_client
+    
+    if not credential:
+        raise ValueError("Azure credential not initialized")
+    
+    print(f"Connecting to Blob Storage: {STORAGE_ENDPOINT}")
+    blob_service_client = BlobServiceClient(account_url=STORAGE_ENDPOINT, credential=credential)
+    print(f"✓ Blob Storage initialized")
 
 def get_sql_connection():
-    """Get SQL Server connection."""
+    """Get SQL Server connection using Managed Identity (Azure AD authentication)."""
     try:
-        # Use SQL_PASSWORD from Key Vault if available, otherwise fallback
-        password = SQL_PASSWORD if SQL_PASSWORD else 'VanCr@2025SecurePass!'
+        if not credential:
+            raise ValueError("Azure credential not initialized")
+        
+        # Get access token for SQL
+        token = credential.get_token("https://database.windows.net/.default")
+        token_bytes = token.token.encode("UTF-16-LE")
+        token_struct = struct.pack(f'<I{len(token_bytes)}s', len(token_bytes), token_bytes)
+        
         connection_string = (
-            f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+            f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+            f"SERVER={SQL_SERVER};"
+            f"DATABASE={SQL_DATABASE};"
+        )
+        
+        SQL_COPT_SS_ACCESS_TOKEN = 1256  # Connection option for access token
+        conn = pyodbc.connect(connection_string, attrs_before={SQL_COPT_SS_ACCESS_TOKEN: token_struct})
+        print("✓ SQL connection established with Managed Identity")
+        return conn
+    except Exception as e:
+        app.logger.error(f"SQL Managed Identity connection failed: {e}")
+        # Fallback to SQL authentication if Managed Identity fails
+        password = os.environ.get('SQL_PASSWORD', 'VanCr@2025SecurePass!')
+        connection_string = (
+            f"DRIVER={{ODBC Driver 18 for SQL Server}};"
             f"SERVER={SQL_SERVER};"
             f"DATABASE={SQL_DATABASE};"
             f"UID={SQL_USERNAME};"
-            f"PWD={password}"
+            f"PWD={password};"
+            f"Encrypt=yes;"
+            f"TrustServerCertificate=no;"
         )
+        print("⚠ Falling back to SQL authentication")
         return pyodbc.connect(connection_string)
-    except Exception as e:
-        app.logger.error(f"SQL connection error: {e}")
-        raise
 
 @app.route('/')
 def index():
@@ -251,11 +263,10 @@ def add_product():
         # Generate unique item ID
         item_id = str(uuid.uuid4())
         
-        # Upload image to Azure Blob Storage
-        if not STORAGE_CONNECTION_STRING:
-            return jsonify({'ok': False, 'error': 'Storage not configured'}), 500
+        # Upload image to Azure Blob Storage using Managed Identity
+        if blob_service_client is None:
+            init_blob_storage()
         
-        blob_service_client = BlobServiceClient.from_connection_string(STORAGE_CONNECTION_STRING)
         container_client = blob_service_client.get_container_client(BLOB_CONTAINER)
         
         # Create container if doesn't exist
