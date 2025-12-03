@@ -13,7 +13,7 @@ a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 .site-header { display: flex; align-items: center; justify-content: center; padding: 16px 24px; border-bottom: 2px solid var(--border); position: sticky; top: 0; background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 .logo { font-weight: 700; font-size: 20px; }
-.nav { display: flex; gap: 12px; align-items: center; }
+.nav { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
 .nav a { 
   padding: 10px 20px; 
   background: linear-gradient(180deg, #ffffff 0%, #f0f0f0 100%);
@@ -215,7 +215,7 @@ body.single-logo-page .content {
 
 /* Filters */
 .filters { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
-.filters input, .filters select { padding: 8px; border: 1px solid var(--border); border-radius: 8px; }
+.filters input, .filters select { padding: 8px; border: 1px solid var(--border); border-radius: 8px; min-width: 150px; flex: 1 1 auto; }
 
 /* Shop page layout */
 .shop-page {
@@ -366,4 +366,185 @@ body.single-logo-page .content {
 
 @media (max-width: 900px) {
   .product-detail { grid-template-columns: 1fr; }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  /* Header and navigation */
+  .site-header { 
+    padding: 12px 8px; 
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .nav { 
+    gap: 6px; 
+    width: 100%;
+  }
+  
+  .nav a { 
+    padding: 8px 12px; 
+    font-size: 13px;
+    flex: 1 1 auto;
+    text-align: center;
+    min-width: 0;
+  }
+  
+  .nav .logout-btn {
+    margin-left: 0;
+    width: 100%;
+    order: 10;
+  }
+  
+  /* Content spacing */
+  .content { 
+    padding: 16px 12px; 
+  }
+  
+  /* Top banner */
+  .top-banner { 
+    height: 80px; 
+    padding-left: 8px;
+  }
+  
+  .top-banner .banner-inner { 
+    font-size: 18px; 
+  }
+  
+  .top-banner .banner-logo { 
+    height: 80px; 
+    right: 4px;
+  }
+  
+  /* Home page categories */
+  .home-header { 
+    flex-direction: column; 
+    gap: 12px;
+    padding: 12px 8px;
+  }
+  
+  .home-logo-link { 
+    position: static; 
+  }
+  
+  .top-categories { 
+    flex-wrap: wrap; 
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .center-cats { 
+    gap: 16px; 
+  }
+  
+  .center-cats .cat { 
+    min-width: 0; 
+    width: 100%;
+    padding: 20px;
+    font-size: 20px;
+  }
+  
+  .center-cats .cat-thumb { 
+    width: 100%; 
+    max-width: 240px;
+    height: auto;
+    aspect-ratio: 1;
+  }
+  
+  /* Product grid */
+  .product-grid { 
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+    gap: 12px; 
+  }
+  
+  .product-card { 
+    padding: 12px; 
+  }
+  
+  .product-image-container { 
+    width: 100%; 
+    height: auto;
+    aspect-ratio: 1;
+  }
+  
+  /* Product detail */
+  .product-detail { 
+    grid-template-columns: 1fr; 
+    gap: 16px;
+  }
+  
+  /* Cart */
+  .cart-item { 
+    grid-template-columns: 80px 1fr; 
+    gap: 8px;
+  }
+  
+  .cart-item img { 
+    width: 80px; 
+    height: 80px; 
+  }
+  
+  .cart-item button { 
+    grid-column: 1 / -1; 
+  }
+  
+  /* Checkout form */
+  .checkout-form label { 
+    grid-template-columns: 1fr; 
+    gap: 4px;
+  }
+  
+  /* Shop page filters */
+  .shop-page { 
+    grid-template-columns: 1fr; 
+  }
+  
+  .shop-page .filters { 
+    position: static; 
+    height: auto;
+  }
+  
+  .shop-page .catalog { 
+    padding: 16px 12px; 
+  }
+  
+  /* Manage products table */
+  .products-table { 
+    overflow-x: auto; 
+    display: block;
+  }
+  
+  .products-table table { 
+    min-width: 600px; 
+  }
+}
+
+@media (max-width: 480px) {
+  .nav a { 
+    padding: 6px 8px; 
+    font-size: 12px;
+  }
+  
+  .product-grid { 
+    grid-template-columns: 1fr; 
+  }
+  
+  .center-cats .cat { 
+    font-size: 18px; 
+  }
+  
+  .top-banner .banner-inner { 
+    font-size: 16px; 
+  }
+  
+  .filters { 
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .filters input,
+  .filters select { 
+    width: 100%;
+    min-width: 0;
+  }
 }
