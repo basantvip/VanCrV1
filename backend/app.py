@@ -165,20 +165,6 @@ def save_contact():
         conn = get_sql_connection()
         cursor = conn.cursor()
         
-        # Create table if not exists
-        cursor.execute("""
-            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ContactSubmissions' AND xtype='U')
-            CREATE TABLE ContactSubmissions (
-                SubmissionId NVARCHAR(36) PRIMARY KEY,
-                Subject NVARCHAR(200),
-                Email NVARCHAR(255) NOT NULL,
-                Phone NVARCHAR(20),
-                Message NVARCHAR(MAX) NOT NULL,
-                ActionTaken NVARCHAR(50) DEFAULT 'Pending',
-                SubmittedAt DATETIME2 DEFAULT GETUTCDATE()
-            )
-        """)
-        
         # Insert contact submission
         cursor.execute("""
             INSERT INTO ContactSubmissions (SubmissionId, Subject, Email, Phone, Message, ActionTaken)
