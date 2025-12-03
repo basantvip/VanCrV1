@@ -42,6 +42,19 @@ a:hover { text-decoration: underline; }
 .nav .logout-btn {
   margin-left: auto;
 }
+
+/* Horizontal scroll styling for mobile nav */
+.nav::-webkit-scrollbar {
+  height: 4px;
+}
+.nav::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.05);
+}
+.nav::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 2px;
+}
+
 .content { padding: 24px; max-width: 1100px; margin: 0 auto; background: transparent; }
 .header-logo { height: 40px; width: auto; display: block; }
 
@@ -372,28 +385,35 @@ body.single-logo-page .content {
 @media (max-width: 768px) {
   /* Header and navigation */
   .site-header { 
-    padding: 12px 8px; 
-    flex-direction: column;
-    gap: 8px;
+    padding: 8px; 
+    flex-direction: row;
+    gap: 0;
+    overflow-x: auto;
+    overflow-y: visible;
+    justify-content: flex-start;
   }
   
   .nav { 
-    gap: 6px; 
+    gap: 4px; 
     width: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 0;
   }
   
   .nav a { 
     padding: 8px 12px; 
-    font-size: 13px;
-    flex: 1 1 auto;
+    font-size: 12px;
+    flex: 0 0 auto;
     text-align: center;
-    min-width: 0;
+    white-space: nowrap;
   }
   
   .nav .logout-btn {
-    margin-left: 0;
-    width: 100%;
-    order: 10;
+    margin-left: auto;
+    flex: 0 0 auto;
   }
   
   /* Content spacing */
@@ -521,12 +541,13 @@ body.single-logo-page .content {
 
 @media (max-width: 480px) {
   .nav a { 
-    padding: 6px 8px; 
-    font-size: 12px;
+    padding: 8px 10px; 
+    font-size: 11px;
   }
   
   .product-grid { 
-    grid-template-columns: 1fr; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 8px;
   }
   
   .center-cats .cat { 
