@@ -210,8 +210,12 @@
           return;
         }
         
-        const endpoint = window.PRODUCT_API_ENDPOINT || 'http://localhost:8000/api/add-product';
-        const res = await fetch(endpoint, {
+        // Determine API endpoint based on hostname
+        const API_BASE = window.location.hostname.includes('github.io') 
+          ? 'https://vancr-backend.azurewebsites.net' 
+          : 'http://localhost:8000';
+        
+        const res = await fetch(`${API_BASE}/api/add-product`, {
           method: 'POST',
           headers: {
             'X-User-Id': user.userId
