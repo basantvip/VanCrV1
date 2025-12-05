@@ -5,12 +5,13 @@ Uses Managed Identity for authentication to Azure services
 """
 import os
 import uuid
+import json
 from datetime import datetime, timezone
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from azure.cosmos import CosmosClient, PartitionKey
 from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, ContentSettings
 import struct
 from werkzeug.utils import secure_filename
 import pyodbc
@@ -418,7 +419,15 @@ def update_product(product_id):
         if not row or row[0] != 'Admin':
             return jsonify({'ok': False, 'error': 'Unauthorized. Admin access required.'}), 403
         
-        data = request.get_json(force=True) or {}
+        # Check if this is FormData (with image) or JSON (without image)
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            # FormData with optional image
+            data = request.form.to_dict()
+            image_file = request.files.get('itemImage')
+        else:
+            # JSON without image
+            data = request.get_json(force=True) or {}
+            image_file = None
         
         if database is None:
             init_cosmos()
@@ -428,17 +437,77 @@ def update_product(product_id):
         # Get existing product
         existing_product = products_container.read_item(item=product_id, partition_key=product_id)
         
+        # Handle image upload if provided
+        if image_file:
+            # Delete old image from blob storage if it exists
+            old_image_url = existing_product.get('imageUrl', '')
+            if old_image_url:
+                try:
+                    # Extract blob name from URL
+                    blob_name = old_image_url.split('/')[-1]
+                    blob_client = BlobServiceClient(
+                        account_url=f"https://{STORAGE_ACCOUNT}.blob.core.windows.net",
+                        credential=DefaultAzureCredential()
+                    ).get_blob_client(container='products', blob=blob_name)
+                    blob_client.delete_blob()
+                    app.logger.info(f'Deleted old image: {blob_name}')
+                except Exception as e:
+                    app.logger.warning(f'Failed to delete old image: {e}')
+            
+            # Upload new image
+            file_ext = os.path.splitext(image_file.filename)[1]
+            unique_filename = f"{uuid.uuid4()}{file_ext}"
+            
+            blob_client = BlobServiceClient(
+                account_url=f"https://{STORAGE_ACCOUNT}.blob.core.windows.net",
+                credential=DefaultAzureCredential()
+            ).get_blob_client(container='products', blob=unique_filename)
+            
+            blob_client.upload_blob(image_file, overwrite=True, content_settings=ContentSettings(content_type=image_file.content_type))
+            image_url = blob_client.url
+            
+            existing_product['imageUrl'] = image_url
+        
         # Update fields if provided
         if 'price' in data:
             existing_product['price'] = float(data['price'])
         if 'categories' in data:
-            existing_product['categories'] = data['categories']
+            # Handle both JSON array and form field (comma-separated or JSON string)
+            categories = data['categories']
+            if isinstance(categories, str):
+                try:
+                    existing_product['categories'] = json.loads(categories)
+                except:
+                    existing_product['categories'] = [c.strip() for c in categories.split(',') if c.strip()]
+            else:
+                existing_product['categories'] = categories
         if 'ageGroups' in data:
-            existing_product['ageGroups'] = data['ageGroups']
+            age_groups = data['ageGroups']
+            if isinstance(age_groups, str):
+                try:
+                    existing_product['ageGroups'] = json.loads(age_groups)
+                except:
+                    existing_product['ageGroups'] = [a.strip() for a in age_groups.split(',') if a.strip()]
+            else:
+                existing_product['ageGroups'] = age_groups
         if 'seasons' in data:
-            existing_product['seasons'] = data['seasons']
+            seasons = data['seasons']
+            if isinstance(seasons, str):
+                try:
+                    existing_product['seasons'] = json.loads(seasons)
+                except:
+                    existing_product['seasons'] = [s.strip() for s in seasons.split(',') if s.strip()]
+            else:
+                existing_product['seasons'] = seasons
         if 'occasions' in data:
-            existing_product['occasions'] = data['occasions']
+            occasions = data['occasions']
+            if isinstance(occasions, str):
+                try:
+                    existing_product['occasions'] = json.loads(occasions)
+                except:
+                    existing_product['occasions'] = [o.strip() for o in occasions.split(',') if o.strip()]
+            else:
+                existing_product['occasions'] = occasions
         
         existing_product['updatedAt'] = datetime.now(timezone.utc).isoformat()
         

@@ -203,29 +203,62 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
   }
   
   try {
-    const response = await fetch(`${API_BASE}/api/products/${productToEdit.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-User-Id': user.userId
-      },
-      body: JSON.stringify({
-        price: newPrice,
-        categories: categories,
-        ageGroups: ageGroups,
-        seasons: seasons,
-        occasions: occasions
-      })
-    });
+    // Check if new image is uploaded
+    const imageFile = document.getElementById('editImage').files[0];
     
-    const data = await response.json();
-    
-    if (response.ok && data.ok) {
-      showStatus('Product updated successfully', 'success');
-      closeEditModal();
-      loadProducts(); // Reload products
+    if (imageFile) {
+      // If new image is uploaded, use FormData to include the file
+      const formData = new FormData();
+      formData.append('price', newPrice);
+      formData.append('categories', JSON.stringify(categories));
+      formData.append('ageGroups', JSON.stringify(ageGroups));
+      formData.append('seasons', JSON.stringify(seasons));
+      formData.append('occasions', JSON.stringify(occasions));
+      formData.append('itemImage', imageFile);
+      
+      const response = await fetch(`${API_BASE}/api/products/${productToEdit.id}`, {
+        method: 'PUT',
+        headers: {
+          'X-User-Id': user.userId
+        },
+        body: formData
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.ok) {
+        showStatus('Product updated successfully', 'success');
+        closeEditModal();
+        loadProducts();
+      } else {
+        showStatus(data.error || 'Failed to update product', 'error');
+      }
     } else {
-      showStatus(data.error || 'Failed to update product', 'error');
+      // No new image, send JSON only
+      const response = await fetch(`${API_BASE}/api/products/${productToEdit.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': user.userId
+        },
+        body: JSON.stringify({
+          price: newPrice,
+          categories: categories,
+          ageGroups: ageGroups,
+          seasons: seasons,
+          occasions: occasions
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.ok) {
+        showStatus('Product updated successfully', 'success');
+        closeEditModal();
+        loadProducts();
+      } else {
+        showStatus(data.error || 'Failed to update product', 'error');
+      }
     }
   } catch (error) {
     console.error('Error updating product:', error);
