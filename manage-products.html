@@ -168,8 +168,31 @@
       border: 1px solid #d1d5db;
       border-radius: 6px;
     }
+    .edit-form .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .edit-form .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      font-weight: normal;
+      white-space: nowrap;
+    }
+    .edit-form .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
 
     /* Mobile responsiveness for manage products */
+    @media (max-width: 768px) {
+      .edit-form .checkbox-group {
+        grid-template-columns: 1fr;
+      }
+    }
     @media (max-width: 768px) {
       .manage-products-container {
         padding: 16px 8px;
@@ -345,45 +368,45 @@
         
         <div class="form-group">
           <label>Categories *</label>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="categories" value="Girls"> Girls</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="categories" value="Boys"> Boys</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="categories" value="Baby"> Baby</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="categories" value="Accessories"> Accessories</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="categories" value="Footwear"> Footwear</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="categories" value="Girls"> Girls</label>
+            <label><input type="checkbox" name="categories" value="Boys"> Boys</label>
+            <label><input type="checkbox" name="categories" value="Baby"> Baby</label>
+            <label><input type="checkbox" name="categories" value="Accessories"> Accessories</label>
+            <label><input type="checkbox" name="categories" value="Footwear"> Footwear</label>
           </div>
         </div>
 
         <div class="form-group">
           <label>Age Groups *</label>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="ageGroups" value="Newborn"> Newborn</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="ageGroups" value="Infant"> Infant</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="ageGroups" value="Toddler"> Toddler</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="ageGroups" value="Preschool"> Preschool</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="ageGroups" value="Kids"> Kids</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="ageGroups" value="Newborn"> Newborn</label>
+            <label><input type="checkbox" name="ageGroups" value="Infant"> Infant</label>
+            <label><input type="checkbox" name="ageGroups" value="Toddler"> Toddler</label>
+            <label><input type="checkbox" name="ageGroups" value="Preschool"> Preschool</label>
+            <label><input type="checkbox" name="ageGroups" value="Kids"> Kids</label>
           </div>
         </div>
 
         <div class="form-group">
           <label>Seasons *</label>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="seasons" value="Spring"> Spring</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="seasons" value="Summer"> Summer</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="seasons" value="Fall"> Fall</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="seasons" value="Winter"> Winter</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="seasons" value="All Season"> All Season</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="seasons" value="Spring"> Spring</label>
+            <label><input type="checkbox" name="seasons" value="Summer"> Summer</label>
+            <label><input type="checkbox" name="seasons" value="Fall"> Fall</label>
+            <label><input type="checkbox" name="seasons" value="Winter"> Winter</label>
+            <label><input type="checkbox" name="seasons" value="All Season"> All Season</label>
           </div>
         </div>
 
         <div class="form-group">
           <label>Occasions *</label>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="occasions" value="Casual"> Casual</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="occasions" value="Formal"> Formal</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="occasions" value="Party"> Party</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="occasions" value="Traditional"> Traditional</label>
-            <label style="display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" name="occasions" value="Everyday"> Everyday</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" name="occasions" value="Casual"> Casual</label>
+            <label><input type="checkbox" name="occasions" value="Formal"> Formal</label>
+            <label><input type="checkbox" name="occasions" value="Party"> Party</label>
+            <label><input type="checkbox" name="occasions" value="Traditional"> Traditional</label>
+            <label><input type="checkbox" name="occasions" value="Everyday"> Everyday</label>
           </div>
         </div>
 
