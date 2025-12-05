@@ -154,18 +154,30 @@ function openEditModal(productId) {
 function closeEditModal() {
   productToEdit = null;
   document.getElementById('editForm').reset();
+  document.getElementById('editModalError').style.display = 'none';
   document.getElementById('editModal').classList.remove('active');
+}
+
+function showEditModalError(message) {
+  const errorDiv = document.getElementById('editModalError');
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+  errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function hideEditModalError() {
+  document.getElementById('editModalError').style.display = 'none';
 }
 
 document.getElementById('editForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  hideEditModalError();
   
   if (!productToEdit) return;
   
   const user = getUser();
   if (!user) {
-    showStatus('Please login to edit products', 'error');
-    closeEditModal();
+    showEditModalError('Please login to edit products');
     return;
   }
   
@@ -186,19 +198,19 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
   
   // Validate at least one option is selected for each field
   if (categories.length === 0) {
-    showStatus('Please select at least one category', 'error');
+    showEditModalError('Please select at least one category');
     return;
   }
   if (ageGroups.length === 0) {
-    showStatus('Please select at least one age group', 'error');
+    showEditModalError('Please select at least one age group');
     return;
   }
   if (seasons.length === 0) {
-    showStatus('Please select at least one season', 'error');
+    showEditModalError('Please select at least one season');
     return;
   }
   if (occasions.length === 0) {
-    showStatus('Please select at least one occasion', 'error');
+    showEditModalError('Please select at least one occasion');
     return;
   }
   
@@ -231,7 +243,7 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
         closeEditModal();
         loadProducts();
       } else {
-        showStatus(data.error || 'Failed to update product', 'error');
+        showEditModalError(data.error || 'Failed to update product');
       }
     } else {
       // No new image, send JSON only
@@ -257,12 +269,12 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
         closeEditModal();
         loadProducts();
       } else {
-        showStatus(data.error || 'Failed to update product', 'error');
+        showEditModalError(data.error || 'Failed to update product');
       }
     }
   } catch (error) {
     console.error('Error updating product:', error);
-    showStatus('Network error. Could not update product.', 'error');
+    showEditModalError('Network error. Could not update product.');
   }
 });
 

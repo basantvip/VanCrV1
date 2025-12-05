@@ -129,6 +129,16 @@
       margin-top: 0;
       color: #1f2937;
     }
+    .modal-error {
+      padding: 12px 16px;
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      border-radius: 6px;
+      color: #991b1b;
+      margin-bottom: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
     .modal-actions {
       display: flex;
       gap: 12px;
@@ -355,6 +365,7 @@
   <div id="editModal" class="modal">
     <div class="modal-content">
       <h2>Edit Product</h2>
+      <div id="editModalError" class="modal-error" style="display: none;"></div>
       <form id="editForm" class="edit-form">
         <div class="form-group">
           <label>Current Product Image</label>
