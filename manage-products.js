@@ -122,6 +122,9 @@ function openEditModal(productId) {
   productToEdit = products.find(p => p.id === productId);
   if (!productToEdit) return;
   
+  // Set product image
+  document.getElementById('editProductImage').src = productToEdit.imageUrl;
+  
   // Set price
   document.getElementById('editPrice').value = productToEdit.price;
   
