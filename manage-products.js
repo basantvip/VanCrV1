@@ -280,3 +280,15 @@ document.getElementById('editForm').addEventListener('submit', async (e) => {
 
 // Load products on page load
 loadProducts();
+
+// Preview image when file is selected in edit modal
+document.getElementById('editImage').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      document.getElementById('editProductImage').src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});

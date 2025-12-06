@@ -1,35 +1,20 @@
-# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-.venv/
 venv/
-ENV/
 env/
-
-# Azure secrets (DO NOT COMMIT)
-*.connectionstring
-*.key
-local.settings.json
-
-# Environment variables with secrets
-.env
-.env.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
+ENV/
+.venv
 *.log
-
-# Dependencies
-node_modules/
+.env
+local.settings.json
+instance/
+.webassets-cache
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
